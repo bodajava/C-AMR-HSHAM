@@ -22,9 +22,10 @@ const bootstrap = async (): Promise<express.Express> => {
     }
   }));
   app.use(cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    origin: true, // Reflect request origin
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
   }));
   // Serve static files (Frontend Page)
   app.use(express.static('public'));

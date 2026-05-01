@@ -227,12 +227,10 @@ export class AuthenticationService {
       ttl: 120 // 2 minutes
     });
 
-    emailEvent.emit("sendEmail", async () => {
-      await sendEmail({
-        to: email,
-        subject: subject as string,
-        html: await emailTemplet({ code: Number(code), title }),
-      });
+    await sendEmail({
+      to: email,
+      subject: subject as string,
+      html: await emailTemplet({ code: Number(code), title }),
     });
 
     await this.redis.incr(maxAttemptOtp({ email, subject }));

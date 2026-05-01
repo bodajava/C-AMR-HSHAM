@@ -11,7 +11,7 @@ import { s3Service } from './common/services/s3.service.js';
 import { asyncHandler } from './common/utils/async-handler.util.js';
 import { notificationService } from './common/services/notification.service.js';
 
-const bootstrap = async (): Promise<void> => {
+const bootstrap = async (): Promise<express.Express> => {
   const app: express.Express = express();
 
   app.use(express.json({
@@ -130,20 +130,24 @@ const bootstrap = async (): Promise<void> => {
   app.use(globalErrorHandler);
 
   // Server setup
-  const PORT = configService.get('PORT');
-  const server = app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT} ✅`);
-    console.log(`Application bootstrapped successfully in ${configService.get('NODE_ENV')} mode 🚀`);
-  });
+  if (!process.env.VERCEL) {
+    const PORT = configService.get('PORT') || 3001;
+    const server = app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT} ✅`);
+      console.log(`Application bootstrapped successfully in ${configService.get('NODE_ENV')} mode 🚀`);
+    });
 
-  server.on('error', (err: any) => {
-    if (err.code === 'EADDRINUSE') {
-      console.error(`Port ${PORT} is already in use. Please try a different port or kill the existing process.`);
-      process.exit(1);
-    } else {
-      console.error('Server error:', err);
-    }
-  });
+    server.on('error', (err: any) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use. Please try a different port or kill the existing process.`);
+        process.exit(1);
+      } else {
+        console.error('Server error:', err);
+      }
+    });
+  }
+
+  return app;
 };
 
 export default bootstrap;

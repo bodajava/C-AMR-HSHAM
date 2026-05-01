@@ -46,7 +46,7 @@ export default function VerifyOTPPage() {
     setIsSubmitting(true);
     const toastId = toast.loading("Verifying code...");
     try {
-      await authApi.confirmEmail({ email, otp: Number(data.otp) });
+      await authApi.confirmEmail({ email, otp: data.otp });
       toast.success("Email verified successfully! You can now login.", { id: toastId });
       
       setTimeout(() => navigate("/login"), 1500);

@@ -12,15 +12,20 @@ export const sendEmail = async ({
   attachments = []
 }:Mail.Options):Promise<void> => {
   const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
     auth: {
       user: configService.get('EMAIL_APP'),
       pass: configService.get('EMAIL_APP_PASSWORD'),
     },
+    tls: {
+      rejectUnauthorized: false
+    }
   });
 
   if(!to && !bcc){
-    throw new BadRequestException("invalid recipinet")
+    throw new BadRequestException("invalid recipient")
   }
 
   if(!(html as string)?.length && attachments?.length){
@@ -29,8 +34,9 @@ export const sendEmail = async ({
 
   // Send an email using async/await
   try {
-    await transporter.sendMail({
-      from: `"social app" <${configService.get('EMAIL_APP')}>`,
+    console.log(`[EmailService] Sending email to: ${to}`);
+    const info = await transporter.sendMail({
+      from: `"Social App" <${configService.get('EMAIL_APP')}>`,
       to,
       cc,
       bcc,
@@ -38,8 +44,9 @@ export const sendEmail = async ({
       html,
       attachments
     });
+    console.log(`[EmailService] ✅ Sent: ${info.messageId}`);
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error("[EmailService] ❌ Error:", error);
     throw new BadRequestException("Failed to send email");
   }
 }

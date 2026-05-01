@@ -13,14 +13,15 @@ export const sendEmail = async ({
 }:Mail.Options):Promise<void> => {
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false, // Use STARTTLS
     auth: {
       user: configService.get('EMAIL_APP'),
       pass: configService.get('EMAIL_APP_PASSWORD'),
     },
     tls: {
-      rejectUnauthorized: false
+      rejectUnauthorized: false,
+      minVersion: 'TLSv1.2'
     }
   });
 

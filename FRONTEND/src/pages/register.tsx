@@ -110,7 +110,7 @@ export default function RegisterPage() {
       
       const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || "bbido761@gmail.com";
       const isAdmin = user.email === adminEmail;
-      setTimeout(() => navigate(isAdmin ? "/admin/workouts" : "/philosophy"), 1000);
+      setTimeout(() => navigate(isAdmin ? "/admin/workouts" : "/#philosophy"), 1000);
     } catch (error: any) {
       toast.error(error.message || "Google Login failed", { id: toastId });
     }

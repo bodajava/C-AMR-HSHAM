@@ -62,9 +62,14 @@ export function Header() {
 										<Link to="/admin/workouts">Admin Panel</Link>
 									</Button>
 								) : (
-									<Button asChild size="sm" variant="ghost" className="font-semibold">
-										<Link to="/philosophy">Philosophy</Link>
-									</Button>
+									<div className="flex items-center gap-1">
+										<Button asChild size="sm" variant="ghost" className="font-semibold">
+											<Link to="/dashboard">Dashboard</Link>
+										</Button>
+										<Button asChild size="sm" variant="ghost" className="font-semibold text-muted-foreground hidden lg:inline-flex">
+											<Link to="/#philosophy">Philosophy</Link>
+										</Button>
+									</div>
 								)}
 								<Button size="sm" variant="outline" className="rounded-full px-6 font-bold" onClick={handleLogout}>
 									Logout

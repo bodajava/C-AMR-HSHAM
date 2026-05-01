@@ -13,6 +13,14 @@ const SettingsPage = memo(function SettingsPage() {
   const { user, updateUser, logout } = useAuthStore();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const getProfileImageUrl = (path?: string) => {
+    if (!path) return `https://ui-avatars.com/api/?name=${user?.firstName}+${user?.lastName}&background=random`;
+    if (path.startsWith('http')) return path;
+    const baseUrl = import.meta.env.VITE_API_URL || 'https://c-amr-hsham-qkn9.vercel.app';
+    return `${baseUrl}/upload/${path}`;
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -79,6 +87,28 @@ const SettingsPage = memo(function SettingsPage() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (!window.confirm("ARE YOU SURE? This action is permanent and will delete all your data, workouts, and subscription info. You cannot undo this.")) {
+      return;
+    }
+
+    setIsDeleting(true);
+    const toastId = toast.loading("Deleting account...");
+    try {
+      await userApi.deleteProfile();
+      toast.success("Account deleted. We're sorry to see you go.", { id: toastId });
+      logout();
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
+    } catch (error: any) {
+      console.error("Delete error:", error);
+      toast.error(error.message || "Failed to delete account. Please contact support.", { id: toastId });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-8 pt-0">
       <div className="flex justify-between items-end">
@@ -114,7 +144,7 @@ const SettingsPage = memo(function SettingsPage() {
                 <div className="h-24 w-24 rounded-full bg-muted overflow-hidden border-2 border-border flex items-center justify-center">
                   {user?.profilePicture ? (
                     <img 
-                      src={user.profilePicture} 
+                      src={getProfileImageUrl(user.profilePicture)} 
                       alt="Profile" 
                       className="h-full w-full object-cover"
                       onError={(e) => {
@@ -172,8 +202,18 @@ const SettingsPage = memo(function SettingsPage() {
                 <p className="text-sm font-bold">Delete Account</p>
                 <p className="text-xs text-muted-foreground">Permanently remove your data and subscription.</p>
               </div>
-              <Button variant="destructive" size="sm" className="rounded-xl font-bold shadow-sm">
-                <HugeiconsIcon icon={Delete02Icon} className="mr-2 h-4 w-4" />
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                className="rounded-xl font-bold shadow-sm"
+                onClick={handleDeleteAccount}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <HugeiconsIcon icon={Delete02Icon} className="mr-2 h-4 w-4" />
+                )}
                 Delete
               </Button>
             </div>

@@ -80,6 +80,7 @@ export const userApi = {
     apiClient.patch('/user/profile-image', data),
   updateProfileImage: (key: string) => apiClient.patch('/user/profile-image', { key }),
   registerFcmToken: (token: string) => apiClient.patch('/user/fcm-token', { token }),
+  deleteProfile: () => apiClient.delete('/user/delete-profile'),
 };
 
 // Subscription APIs

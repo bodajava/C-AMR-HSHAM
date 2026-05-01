@@ -33,7 +33,7 @@ export const AppSidebar = memo(function AppSidebar() {
 
 	return (
 		<Sidebar
-			className="static min-h-full *:data-[slot=sidebar-inner]:bg-background"
+			className="min-h-full *:data-[slot=sidebar-inner]:bg-background"
 			collapsible="offcanvas"
 			variant="sidebar"
 		>

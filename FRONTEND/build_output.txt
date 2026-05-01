@@ -1,0 +1,9 @@
+src/pages/admin/metrics.tsx(4,40): error TS6133: 'Flame' is declared but its value is never read.
+src/pages/admin/metrics.tsx(4,47): error TS6133: 'Droplets' is declared but its value is never read.
+src/pages/login.tsx(17,19): error TS6133: 'Mail' is declared but its value is never read.
+src/pages/login.tsx(59,9): error TS6133: 'loginWithGoogle' is declared but its value is never read.
+src/pages/login.tsx(60,23): error TS6133: 'tokenResponse' is declared but its value is never read.
+src/pages/login.tsx(63,13): error TS6133: 'fcmToken' is declared but its value is never read.
+src/pages/philosophy.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/pages/philosophy.tsx(3,17): error TS6133: 'Heart' is declared but its value is never read.
+src/pages/workouts.tsx(15,1): error TS6133: 'cn' is declared but its value is never read.

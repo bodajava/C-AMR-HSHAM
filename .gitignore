@@ -1,0 +1,69 @@
+# ========================
+# Environment Variables
+# ========================
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+.env.test
+!.env.example
+
+# ========================
+# Dependencies
+# ========================
+node_modules/
+FRONTEND/node_modules/
+BACKEND/node_modules/
+
+# ========================
+# Build Output
+# ========================
+dist/
+dist-ssr/
+FRONTEND/dist/
+BACKEND/dist/
+build/
+
+# ========================
+# Logs
+# ========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ========================
+# OS / Editor
+# ========================
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.local
+
+# Editor directories
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# ========================
+# Firebase / Credentials
+# ========================
+*.json
+!package.json
+!tsconfig*.json
+config/*.json
+BACKEND/config/
+
+# ========================
+# Misc
+# ========================
+*.tgz
+.cache/
+coverage/

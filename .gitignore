@@ -58,6 +58,7 @@ lerna-debug.log*
 *.json
 !package.json
 !tsconfig*.json
+!vercel.json
 config/*.json
 BACKEND/config/
 

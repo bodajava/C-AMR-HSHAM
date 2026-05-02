@@ -19,9 +19,9 @@ export function Footer() {
         <div className="xl:grid xl:grid-cols-3 xl:gap-8">
           <div className="space-y-8">
             <div className="flex items-center gap-2">
-              <img src={logoUrl} alt="PlusBeat Logo" className="h-10 w-auto" />
-              <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                PlusBeat
+              <img src={logoUrl} alt="C-AMR-HSHAM Logo" className="h-10 w-auto" />
+              <span className="text-2xl font-black tracking-[0.2em] uppercase text-slate-900 dark:text-white">
+                C-AMR-HSHAM
               </span>
             </div>
             <p className="text-sm leading-6 text-slate-600 dark:text-slate-400 max-w-xs">
@@ -90,7 +90,7 @@ export function Footer() {
                 <ul role="list" className="mt-6 space-y-4">
                   <li className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
                     <HugeiconsIcon icon={Mail01Icon} className="h-4 w-4 text-teal-500" />
-                    support@plusbeat.com
+                    contact@c-amr-hsham.com
                   </li>
                   <li className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
                     <HugeiconsIcon icon={SmartPhone01Icon} className="h-4 w-4 text-teal-500" />
@@ -108,7 +108,7 @@ export function Footer() {
         
         <div className="mt-16 border-t border-slate-200 dark:border-slate-800 pt-8 sm:mt-20 lg:mt-24">
           <p className="text-xs leading-5 text-slate-500 dark:text-slate-500">
-            &copy; {currentYear} PlusBeat. All rights reserved. Built for precision and performance.
+            &copy; {currentYear} C-AMR-HSHAM. All rights reserved. Built for precision and performance.
           </p>
         </div>
       </div>

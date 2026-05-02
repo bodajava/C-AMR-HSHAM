@@ -43,7 +43,7 @@ export const AppSidebar = memo(function AppSidebar() {
 					to="/"
 				>
 					<Logo className="h-4" />
-					<span className="sr-only">PlusBeat</span>
+					<span className="sr-only">C-AMR-HSHAM</span>
 				</Link>
 			</SidebarHeader>
 			<SidebarContent>

@@ -141,7 +141,7 @@ export const emailTemplet = async ({ code, title } : {code:number | string , tit
                 <h1>${title || "Confirm Your Email Change"}</h1>
                 <p>Hello,</p>
                 <p>
-                    You're updating your account with <strong>Captain Amr Gym</strong>. 
+                    You're updating your account with <strong>C-AMR-HSHAM</strong>. 
                     To ensure it's really you and keep your transformation journey secure, please use the verification code below.
                 </p>
 
@@ -163,9 +163,9 @@ export const emailTemplet = async ({ code, title } : {code:number | string , tit
             </div>
 
             <div class="footer">
-                <p><strong>Captain Amr Gym</strong></p>
+                <p><strong>C-AMR-HSHAM</strong></p>
                 <p>Precision Training & Data-Driven Nutrition</p>
-                <p>© ${new Date().getFullYear()} PlusBeat. All rights reserved.</p>
+                <p>© ${new Date().getFullYear()} C-AMR-HSHAM. All rights reserved.</p>
                 <div class="social-links">
                     <a href="https://c-amr-hsham.vercel.app">Website</a>
                     <a href="#">Instagram</a>

@@ -38,13 +38,13 @@ export const AppSidebar = memo(function AppSidebar() {
 			variant="sidebar"
 		>
 			<SidebarHeader className="relative h-14 justify-center px-2 py-0">
-				<a
+				<Link
 					className="rounded-2xl flex h-10 w-max items-center justify-center px-3 hover:bg-muted dark:hover:bg-muted/50"
-					href="#link"
+					to="/"
 				>
 					<Logo className="h-4" />
-					<span className="sr-only">Efferd</span>
-				</a>
+					<span className="sr-only">PlusBeat</span>
+				</Link>
 			</SidebarHeader>
 			<SidebarContent>
 				{filteredGroups.map((group, index) => (

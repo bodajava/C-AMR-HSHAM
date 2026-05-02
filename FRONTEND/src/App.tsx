@@ -29,6 +29,7 @@ const AdminPlansPage    = lazy(() => import("./pages/admin/plans"));
 const SubscriptionSuccessPage = lazy(() => import("./pages/subscription/success"));
 const SubscriptionCancelPage  = lazy(() => import("./pages/subscription/cancel"));
 const PhilosophyPage          = lazy(() => import("./pages/philosophy"));
+const NotFoundPage            = lazy(() => import("./pages/not-found"));
 
 import { RoleEnum } from "@/types/roles";
 
@@ -100,6 +101,9 @@ export default function App() {
                 <Route path="community"          element={<CommunityPage />} />
                 <Route path="settings"           element={<SettingsPage />} />
               </Route>
+
+              {/* ── 404 Fallback ────────────────────────────────────────── */}
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </Suspense>
         </Router>

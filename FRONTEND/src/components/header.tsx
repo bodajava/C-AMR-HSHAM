@@ -29,11 +29,10 @@ export function Header() {
 		>
 			<nav className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4 md:px-8">
 				<Link
-					className="text-2xl font-bold tracking-tighter text-primary flex items-center gap-2"
+					className="flex items-center gap-2"
 					to="/"
 				>
 					<Logo className="h-6" />
-					<span className="hidden sm:inline">Lumina Coach</span>
 				</Link>
 				<div className="hidden items-center gap-8 md:flex">
 					{landingNavLinks.map((link) => (

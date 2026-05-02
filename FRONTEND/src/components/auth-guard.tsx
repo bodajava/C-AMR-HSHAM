@@ -23,7 +23,7 @@ export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
 
     if (token && user && allowedRoles) {
       const isAdminRoute = allowedRoles.includes(RoleEnum.ADMIN);
-      const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || "bbido761@gmail.com";
+      const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || "amr917151@gmail.com";
       
       if (isAdminRoute && user.email !== adminEmail) {
         navigate("/dashboard");

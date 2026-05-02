@@ -72,7 +72,7 @@ export function MobileNav() {
 								</>
 							) : (
 								<>
-									{(user?.email === (import.meta.env.VITE_ADMIN_EMAIL || "bbido761@gmail.com")) ? (
+									{(user?.email === (import.meta.env.VITE_ADMIN_EMAIL || "amr917151@gmail.com")) ? (
 										<Button asChild className="w-full" variant="ghost" onClick={() => setOpen(false)}>
 											<Link to="/admin/workouts">Admin Panel</Link>
 										</Button>

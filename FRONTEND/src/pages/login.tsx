@@ -47,7 +47,7 @@ export default function LoginPage() {
       setAuth(user, accessToken, refreshToken);
       toast.success("Welcome back! Login successful.", { id: toastId });
       
-      const isAdmin = user.email === (import.meta.env.VITE_ADMIN_EMAIL || "bbido761@gmail.com");
+      const isAdmin = user.email === (import.meta.env.VITE_ADMIN_EMAIL || "amr917151@gmail.com");
       setTimeout(() => navigate(isAdmin ? "/admin/workouts" : "/#philosophy"), 1000);
     } catch (error: any) {
       toast.error(error.message || "Invalid credentials", { id: toastId });
@@ -73,7 +73,7 @@ export default function LoginPage() {
       setAuth(user, accessToken, refreshToken);
       toast.success("Welcome back! Google Login successful.", { id: toastId });
       
-      const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || "bbido761@gmail.com";
+      const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || "amr917151@gmail.com";
       const isAdmin = user.email === adminEmail;
       setTimeout(() => navigate(isAdmin ? "/admin/workouts" : "/#philosophy"), 1000);
     } catch (error: any) {

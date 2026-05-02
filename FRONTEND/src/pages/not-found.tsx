@@ -8,7 +8,7 @@ export default function NotFound() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 px-6 py-24 sm:py-32 lg:px-8">
       <div className="text-center">
         <div className="flex justify-center mb-8">
-          <img src={logoUrl} alt="C-AMR-HSHAM Logo" className="h-16 w-auto animate-pulse" />
+          <img src={logoUrl} alt="AMR-HESHAM Logo" className="h-16 w-auto animate-pulse" />
         </div>
         
         <p className="text-base font-semibold text-teal-600 dark:text-teal-400">404</p>
@@ -39,7 +39,7 @@ export default function NotFound() {
       </div>
       
       <div className="mt-16 text-center text-sm text-slate-500 dark:text-slate-500">
-        <p>© 2024 C-AMR-HSHAM. All rights reserved.</p>
+        <p>© 2024 AMR-HESHAM. All rights reserved.</p>
       </div>
     </div>
   );

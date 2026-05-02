@@ -32,7 +32,7 @@ export function Header() {
 					className="flex items-center gap-2"
 					to="/"
 				>
-					<Logo className="h-6" />
+					<Logo className="h-10" />
 				</Link>
 				<div className="hidden items-center gap-8 md:flex">
 					{landingNavLinks.map((link) => (
@@ -56,7 +56,7 @@ export function Header() {
 							</>
 						) : (
 							<>
-								{(user?.email === (import.meta.env.VITE_ADMIN_EMAIL || "bbido761@gmail.com")) ? (
+								{(user?.email === (import.meta.env.VITE_ADMIN_EMAIL || "amr917151@gmail.com")) ? (
 									<Button asChild size="sm" variant="ghost" className="font-semibold">
 										<Link to="/admin/workouts">Admin Panel</Link>
 									</Button>

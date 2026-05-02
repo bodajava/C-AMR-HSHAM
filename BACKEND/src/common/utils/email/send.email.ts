@@ -37,7 +37,7 @@ export const sendEmail = async ({
   try {
     console.log(`[EmailService] Sending email to: ${to}`);
     const info = await transporter.sendMail({
-      from: `"C-AMR-HSHAM" <${configService.get('EMAIL_APP')}>`,
+      from: `"AMR-HESHAM" <${configService.get('EMAIL_APP')}>`,
       to,
       cc,
       bcc,

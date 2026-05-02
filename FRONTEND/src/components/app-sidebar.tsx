@@ -39,11 +39,11 @@ export const AppSidebar = memo(function AppSidebar() {
 		>
 			<SidebarHeader className="relative h-14 justify-center px-2 py-0">
 				<Link
-					className="rounded-2xl flex h-10 w-max items-center justify-center px-3 hover:bg-muted dark:hover:bg-muted/50"
+					className="rounded-2xl flex h-14 w-max items-center justify-center px-3 hover:bg-muted dark:hover:bg-muted/50"
 					to="/"
 				>
-					<Logo className="h-4" />
-					<span className="sr-only">C-AMR-HSHAM</span>
+					<Logo className="h-8" />
+					<span className="sr-only">AMR-HESHAM</span>
 				</Link>
 			</SidebarHeader>
 			<SidebarContent>

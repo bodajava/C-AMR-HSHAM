@@ -18,7 +18,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { ExerciseVideoModal } from "@/components/exercise-video-modal";
-import { workoutApi, mealApi } from "@/lib/api-client";
+import { workoutApi, mealApi, weeklyPlanApi } from "@/lib/api-client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
@@ -47,34 +47,65 @@ export default function DayPage() {
   const backLink = isDashboard ? "/dashboard/workouts" : "/workouts";
 
   const [workout, setWorkout] = useState<any>(null);
+  const [workouts, setWorkouts] = useState<any[]>([]); // New: support multiple workouts
   const [meals, setMeals] = useState<Meal[]>([]);
+  const [notes, setNotes] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [videoModal, setVideoModal] = useState<{
     open: boolean;
     exercise?: Exercise;
   }>({ open: false });
 
+  const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
   useEffect(() => {
     const fetchData = async () => {
       if (!workoutId) return;
       try {
         setLoading(true);
-        const [workoutRes, mealsRes] = await Promise.all([
-          workoutApi.getById(workoutId),
-          mealApi.getAll()
-        ]);
-        setWorkout(workoutRes.data);
         
-        // Pick 3 random or first 3 meals for the day's strategy
-        const allMeals = mealsRes.data;
-        const dayMeals = allMeals.slice(0, 3).map((m: any, idx: number) => ({
-          ...m,
-          time: idx === 0 ? "08:00 AM" : idx === 1 ? "01:30 PM" : "07:30 PM"
-        }));
-        setMeals(dayMeals);
-      } catch (error) {
+        // Check if workoutId is a day name
+        const isDay = DAYS.includes(workoutId.toLowerCase());
+
+        if (isDay) {
+          const planRes = await weeklyPlanApi.getByDay(workoutId.toLowerCase());
+          const planData = planRes.data;
+          
+          if (planData) {
+            setWorkouts(planData.workouts || []);
+            setMeals(planData.meals || []);
+            setNotes(planData.notes || "");
+            // For backward compatibility with existing UI structure
+            if (planData.workouts?.length > 0) {
+              setWorkout(planData.workouts[0]);
+            }
+          } else {
+            setWorkout(null);
+            setWorkouts([]);
+            setMeals([]);
+          }
+        } else {
+          // Legacy behavior: Fetch single workout by ID
+          const [workoutRes, mealsRes] = await Promise.all([
+            workoutApi.getById(workoutId),
+            mealApi.getAll()
+          ]);
+          const w = workoutRes.data;
+          setWorkout(w);
+          setWorkouts([w]);
+          
+          // Pick 3 random or first 3 meals for the day's strategy
+          const allMeals = mealsRes.data;
+          const dayMeals = allMeals.slice(0, 3).map((m: any, idx: number) => ({
+            ...m,
+            time: idx === 0 ? "08:00 AM" : idx === 1 ? "01:30 PM" : "07:30 PM"
+          }));
+          setMeals(dayMeals);
+        }
+      } catch (error: any) {
+        const errorMsg = error.response?.data?.message || error.message || "Failed to load protocol data";
         console.error("Failed to fetch protocol data", error);
-        toast.error("Failed to load protocol data");
+        toast.error(errorMsg);
       } finally {
         setLoading(false);
       }
@@ -127,87 +158,97 @@ export default function DayPage() {
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight">{workout.name} Protocol</h1>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight capitalize">{workoutId} Strategy</h1>
             <p className="text-muted-foreground font-medium text-sm md:text-base">
-              {workout.category} • Professional Grade • High Intensity
+              Elite Protocols • Professional Grade • High Intensity
             </p>
           </div>
         </div>
-        <Button className="rounded-full px-6 font-bold gap-2 w-full md:w-auto">
+        <Button className="rounded-full px-6 font-bold gap-2 w-full md:w-auto shadow-lg shadow-primary/20">
           <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-5 w-5" />
-          Mark as Completed
+          Protocol Completed
         </Button>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Workout Section */}
-        <div className="space-y-6">
+        <div className="space-y-8">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <HugeiconsIcon 
-                icon={
-                  workout.category === "Strength" ? WeightScaleIcon : 
-                  workout.category === "Conditioning" ? Activity01Icon :
-                  workout.category === "Mobility" ? Yoga01Icon : Dumbbell01Icon
-                } 
-                className="h-6 w-6 text-primary" 
-              />
+              <HugeiconsIcon icon={Dumbbell01Icon} className="h-6 w-6 text-primary" />
             </div>
-            <h2 className="text-xl md:text-2xl font-bold tracking-tight">Training: {workout.name}</h2>
+            <h2 className="text-xl md:text-2xl font-bold tracking-tight">Training Protocols</h2>
           </div>
 
-          <div className="space-y-4">
-            {workout.subExercises?.map((exercise: any, i: number) => (
-              <Card
-                key={i}
-                className="group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-primary/50 bg-card cursor-pointer"
-                onClick={() => setVideoModal({ open: true, exercise: {
-                  name: exercise.name,
-                  sets: exercise.sets,
-                  reps: exercise.reps,
-                  notes: exercise.notes,
-                  videoUrl: exercise.videoUrl
-                }})}
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-black">{exercise.name}</CardTitle>
-                    <button
-                      className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors opacity-100 sm:opacity-0 group-hover:opacity-100 duration-200 px-2.5 py-1.5 rounded-lg hover:bg-primary/5"
+          <div className="space-y-12">
+            {workouts.length > 0 ? workouts.map((w: any, idx: number) => (
+              <div key={w._id || idx} className="space-y-4">
+                <div className="flex items-center gap-2">
+                   <span className="h-6 w-6 rounded-lg bg-primary text-white text-[10px] font-black flex items-center justify-center">{idx + 1}</span>
+                   <h3 className="text-lg font-black tracking-tight">{w.name}</h3>
+                   <span className="text-[10px] font-bold text-muted-foreground uppercase bg-muted/50 px-2 py-0.5 rounded-md">{w.category}</span>
+                </div>
+                <div className="space-y-4">
+                  {w.subExercises?.map((exercise: any, i: number) => (
+                    <Card
+                      key={i}
+                      className="group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-primary/50 bg-card cursor-pointer"
+                      onClick={() => setVideoModal({ open: true, exercise: {
+                        name: exercise.name,
+                        sets: exercise.sets,
+                        reps: exercise.reps,
+                        notes: exercise.notes,
+                        videoUrl: exercise.videoUrl
+                      }})}
                     >
-                      <HugeiconsIcon icon={PlayCircleIcon} className="h-4 w-4" />
-                      Watch Demo
-                    </button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
-                    <div>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Sets</p>
-                      <p className="text-xl font-black">{exercise.sets || 3}</p>
-                    </div>
-                    <div className="sm:border-x sm:px-8">
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Reps</p>
-                      <p className="text-xl font-black">{exercise.reps || "10-12"}</p>
-                    </div>
-                    <div className="ml-auto flex items-center gap-2 text-muted-foreground font-bold text-sm bg-muted/30 px-3 py-1.5 rounded-xl">
-                      <HugeiconsIcon icon={AlarmClockIcon} className="h-4 w-4" />
-                      90s Rest
-                    </div>
-                  </div>
-                  {exercise.notes && (
-                    <p className="mt-4 text-xs text-muted-foreground leading-relaxed border-t pt-4 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      {exercise.notes}
-                    </p>
-                  )}
+                      <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg font-black">{exercise.name}</CardTitle>
+                          <button
+                            className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors opacity-100 sm:opacity-0 group-hover:opacity-100 duration-200 px-2.5 py-1.5 rounded-lg hover:bg-primary/5"
+                          >
+                            <HugeiconsIcon icon={PlayCircleIcon} className="h-4 w-4" />
+                            Watch Demo
+                          </button>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+                          <div>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Sets</p>
+                            <p className="text-xl font-black">{exercise.sets || 3}</p>
+                          </div>
+                          <div className="sm:border-x sm:px-8">
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Reps</p>
+                            <p className="text-xl font-black">{exercise.reps || "10-12"}</p>
+                          </div>
+                          <div className="ml-auto flex items-center gap-2 text-muted-foreground font-bold text-sm bg-muted/30 px-3 py-1.5 rounded-xl">
+                            <HugeiconsIcon icon={AlarmClockIcon} className="h-4 w-4" />
+                            90s Rest
+                          </div>
+                        </div>
+                        {exercise.notes && (
+                          <p className="mt-4 text-xs text-muted-foreground leading-relaxed border-t pt-4 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            {exercise.notes}
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )) : (
+              <Card className="bg-muted/20 border-dashed">
+                <CardContent className="p-10 text-center text-muted-foreground font-medium">
+                  No training protocols assigned for this session.
                 </CardContent>
               </Card>
-            ))}
+            )}
           </div>
         </div>
 
         {/* Meals Section */}
-        <div className="space-y-6">
+        <div className="space-y-8">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
               <HugeiconsIcon icon={Apple01Icon} className="h-6 w-6 text-blue-500" />
@@ -218,9 +259,9 @@ export default function DayPage() {
           <div className="space-y-4">
             {meals.length > 0 ? (
               meals.map((meal, i) => (
-                <div key={i} className="flex items-center gap-4 p-5 rounded-2xl border bg-card/50 hover:border-blue-500/30 transition-colors">
+                <div key={i} className="flex items-center gap-4 p-5 rounded-2xl border bg-card/50 hover:border-blue-500/30 transition-colors shadow-sm">
                   <div className="text-center shrink-0 w-16">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase">{meal.time}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase">{meal.time || `Meal ${i+1}`}</p>
                     <div className="h-8 w-px bg-border mx-auto my-1" />
                     <HugeiconsIcon icon={CircleIcon} className="h-4 w-4 text-muted-foreground mx-auto" />
                   </div>
@@ -248,26 +289,28 @@ export default function DayPage() {
             ) : (
               <Card className="bg-muted/20 border-dashed">
                 <CardContent className="p-10 text-center text-muted-foreground font-medium">
-                  No nutritional strategy assigned for this protocol.
+                  No nutritional strategy assigned for this session.
                 </CardContent>
               </Card>
             )}
           </div>
 
-          <Card className="bg-primary/5 border-primary/20 mt-8">
-            <CardContent className="p-6 flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                <HugeiconsIcon icon={FlashIcon} className="h-6 w-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-bold">Optimization Note</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Today's protocol is focused on maximizing {workout.category?.toLowerCase() || "performance"}. 
-                  Ensure you maintain consistent intensity and follow the nutritional timing specified for optimal metabolic response.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          {(notes || workout?.category) && (
+            <Card className="bg-primary/5 border-primary/20 mt-8">
+              <CardContent className="p-6 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                  <HugeiconsIcon icon={FlashIcon} className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">Optimization Note</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {notes || `Today's protocol is focused on maximizing ${workout?.category?.toLowerCase() || "performance"}. 
+                    Ensure you maintain consistent intensity and follow the nutritional timing specified for optimal metabolic response.`}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 

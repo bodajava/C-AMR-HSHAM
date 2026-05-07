@@ -8,7 +8,6 @@ import { emailTemplet } from "../../common/utils/email/templet.email.js";
 import { EmailEnum, EmailEnumType } from "../../common/enums/emailenum.js";
 import { generateRandomCode } from "../../common/utils/security/random.security.js";
 import { redisService, RedisService, otpKey, blockOtpKey, maxAttemptOtp, pendingUserKey } from "../../common/services/redis.service.js";
-import { emailEvent } from "../../common/utils/email/event.email.js";
 import { ProviderEnum, RoleEnum } from "../../common/enums/user.enum.js";
 import { tokenService, TokenService } from "../../common/services/token.service.js";
 import { OAuth2Client } from "google-auth-library";
@@ -94,8 +93,13 @@ export class AuthenticationService {
       throw new ConflictException("Invalid OTP. Please check your email and try again.");
     }
 
-    const adminEmail = configService.get('ADMIN_EMAIL');
-    const isMainAdmin = email === adminEmail;
+    const ADMIN_EMAILS = [
+      configService.get('ADMIN_EMAIL'),
+      'awm214365879@gmail.com',
+      'amr917151@gmail.com',
+      'bodajava@gmail.com'
+    ].filter(Boolean).map(e => e?.toLowerCase()?.trim());
+    const isMainAdmin = ADMIN_EMAILS.includes(email?.toLowerCase()?.trim());
 
     const user = await this.userRepository.createOne({
       data: {
@@ -192,7 +196,7 @@ export class AuthenticationService {
     const credentials = await this.tokenService.createTokenLogin(user, issuer);
     const userResponse = user.toObject();
     delete userResponse.password;
-    
+
     return { ...credentials, user: userResponse };
   }
 
@@ -246,7 +250,7 @@ export class AuthenticationService {
       return ticket.getPayload();
     } catch (error: any) {
       console.error('Google Verification Error:', error.message);
-      
+
       // Decode token to see what's inside (without verification) for debugging
       const parts = idToken.split('.');
       if (parts.length === 3 && parts[1]) {
@@ -289,8 +293,13 @@ export class AuthenticationService {
       };
     }
 
-    const adminEmail = configService.get('ADMIN_EMAIL');
-    const isMainAdmin = payload.email === adminEmail;
+    const ADMIN_EMAILS = [
+      configService.get('ADMIN_EMAIL'),
+      'awm214365879@gmail.com',
+      'amr917151@gmail.com',
+      'bodajava@gmail.com'
+    ].filter(Boolean).map(e => e?.toLowerCase()?.trim());
+    const isMainAdmin = ADMIN_EMAILS.includes(payload.email?.toLowerCase()?.trim() as string);
 
     const newUser = await this.userRepository.createOne({
       data: {
@@ -331,7 +340,7 @@ export class AuthenticationService {
     const credentials = await this.tokenService.createTokenLogin(user, issuer);
     const userResponse = user.toObject();
     delete userResponse.password;
-    
+
     return {
       user: userResponse,
       ...credentials,
@@ -347,8 +356,13 @@ export class AuthenticationService {
       filter: { email: payload.email as string }
     });
 
-    const adminEmail = configService.get('ADMIN_EMAIL');
-    const isMainAdmin = payload.email === adminEmail;
+    const ADMIN_EMAILS = [
+      configService.get('ADMIN_EMAIL'),
+      'awm214365879@gmail.com',
+      'amr917151@gmail.com',
+      'bodajava@gmail.com'
+    ].filter(Boolean).map(e => e?.toLowerCase()?.trim());
+    const isMainAdmin = ADMIN_EMAILS.includes(payload.email?.toLowerCase()?.trim() as string);
 
     if (user) {
       if (user.provider === ProviderEnum.GOOGLE) {
@@ -359,7 +373,7 @@ export class AuthenticationService {
             update: { role: RoleEnum.ADMIN }
           });
         }
-        
+
         if (FCM) {
           await this.redis.addFCM(user._id, FCM);
           const tokens = await this.redis.getFCMs(user._id);

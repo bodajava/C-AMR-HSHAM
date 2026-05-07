@@ -1,6 +1,6 @@
 import { configService } from './common/services/config.service.js';
 import express, { Request, Response, NextFunction } from "express";
-import { authRouter, userRouter, subscriptionRouter, workoutRouter, mealRouter, performanceMetricsRouter } from "./modules/index.js";
+import { authRouter, userRouter, subscriptionRouter, workoutRouter, mealRouter, performanceMetricsRouter, weeklyPlanRouter } from "./modules/index.js";
 import { globalErrorHandler } from "./middleware/index.js";
 import { NotFoundException } from "./common/exception/index.js";
 import connectDB from "./DB/connection.DB.js";
@@ -27,6 +27,13 @@ const bootstrap = async (): Promise<express.Express> => {
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
   }));
+
+  // Request Logging Middleware
+  app.use((req, res, next) => {
+    console.log(`[Backend] ${req.method} ${req.originalUrl}`);
+    next();
+  });
+
   // Serve static files (Frontend Page)
   app.use(express.static('public'));
 
@@ -62,6 +69,7 @@ const bootstrap = async (): Promise<express.Express> => {
   app.use("/workout", workoutRouter);
   app.use("/meal", mealRouter);
   app.use("/metrics", performanceMetricsRouter);
+  app.use("/weekly-plan", weeklyPlanRouter);
 
 
   // S3 Routes (kept in bootstrap as per user request)
@@ -125,7 +133,8 @@ const bootstrap = async (): Promise<express.Express> => {
 
   // 404 Handler
   app.all('/*dummy', (req: Request, res: Response, next: NextFunction) => {
-    return next(new NotFoundException(`Route ${req.originalUrl} not found`));
+    console.warn(`[BACKEND] 404 Not Found: ${req.method} ${req.originalUrl}`);
+    return next(new NotFoundException(`Route [${req.method}] ${req.originalUrl} not found`));
   });
   // Global Error Handler
   app.use(globalErrorHandler);

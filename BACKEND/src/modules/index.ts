@@ -4,3 +4,4 @@ export { default as subscriptionRouter } from "./subscription/subscription.contr
 export { default as workoutRouter } from "./workout/workout.controller.js";
 export { default as mealRouter } from "./meal/meal.controller.js";
 export { default as performanceMetricsRouter } from "./performance-metrics/performance-metrics.controller.js";
+export { default as weeklyPlanRouter } from "./weekly-plan/weekly-plan.controller.js";

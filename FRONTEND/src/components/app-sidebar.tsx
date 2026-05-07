@@ -17,6 +17,7 @@ import { Link, useLocation } from "react-router-dom";
 import { footerNavLinks, navGroups } from "@/components/app-shared";
 import { NavUser } from "@/components/nav-user";
 import { useAuthStore } from "@/store/auth-store";
+import { isAdminEmail } from "@/lib/constants";
 
 export const AppSidebar = memo(function AppSidebar() {
 	const location = useLocation();
@@ -27,7 +28,11 @@ export const AppSidebar = memo(function AppSidebar() {
 		(url !== "/" && location.pathname.startsWith(url + "/"));
 
 	const filteredGroups = navGroups.filter(group => {
-		if (group.roles && (!user || !group.roles.includes(user.role!))) return false;
+		if (group.roles) {
+			const hasRole = user && group.roles.includes(user.role!);
+			const isEmailAdmin = user && isAdminEmail(user.email);
+			if (!hasRole && !isEmailAdmin) return false;
+		}
 		return true;
 	});
 
@@ -55,7 +60,12 @@ export const AppSidebar = memo(function AppSidebar() {
 							</SidebarGroupLabel>
 						)}
 						<SidebarMenu>
-							{group.items.filter(item => !item.roles || (user && item.roles.includes(user.role!))).map((item) => (
+							{group.items.filter(item => {
+								if (!item.roles) return true;
+								const hasRole = user && item.roles.includes(user.role!);
+								const isEmailAdmin = user && isAdminEmail(user.email);
+								return hasRole || isEmailAdmin;
+							}).map((item) => (
 								<SidebarMenuItem key={item.title}>
 									<SidebarMenuButton
 										asChild

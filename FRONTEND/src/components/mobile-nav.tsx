@@ -9,6 +9,7 @@ import { Cancel01Icon, Menu01Icon } from "@hugeicons/core-free-icons";
 
 import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
+import { isAdminEmail } from "@/lib/constants";
 
 export function MobileNav() {
 	const [open, setOpen] = React.useState(false);
@@ -19,6 +20,8 @@ export function MobileNav() {
 		setOpen(false);
 		toast.success("Logged out successfully");
 	};
+
+	const showAdminPanel = user && isAdminEmail(user.email);
 
 	return (
 		<div className="md:hidden">
@@ -72,7 +75,7 @@ export function MobileNav() {
 								</>
 							) : (
 								<>
-									{(user?.email === (import.meta.env.VITE_ADMIN_EMAIL || "amr917151@gmail.com")) ? (
+									{showAdminPanel ? (
 										<Button asChild className="w-full" variant="ghost" onClick={() => setOpen(false)}>
 											<Link to="/admin/workouts">Admin Panel</Link>
 										</Button>

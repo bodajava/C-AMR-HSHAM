@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { mealApi } from '@/lib/api-client';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Camera, Clock, Flame, X, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Camera, Clock, Flame, X, Loader2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import axios from 'axios';
+import foodsData from '@/data/foods.json';
 
 const AdminMealsPage = () => {
   const [meals, setMeals] = useState<any[]>([]);
@@ -22,16 +23,30 @@ const AdminMealsPage = () => {
     protein: 0,
     carbs: 0,
     fats: 0,
+    fiber: 0,
     prepTime: '',
     image: '',
     videoUrl: ''
   });
+
+  const [foodSearch, setFoodSearch] = useState('');
+  const [selectedFood, setSelectedFood] = useState<any>(null);
+  const [foodQuantity, setFoodQuantity] = useState<number>(100);
+  const [isFoodDropdownOpen, setIsFoodDropdownOpen] = useState(false);
+  const foodDropdownRef = useRef<HTMLDivElement>(null);
 
   const [newIngredient, setNewIngredient] = useState('');
   const [newInstruction, setNewInstruction] = useState('');
 
   useEffect(() => {
     fetchMeals();
+    const handleClickOutside = (event: MouseEvent) => {
+      if (foodDropdownRef.current && !foodDropdownRef.current.contains(event.target as Node)) {
+        setIsFoodDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const fetchMeals = async () => {
@@ -92,6 +107,48 @@ const AdminMealsPage = () => {
     setNewInstruction('');
   };
 
+  const handleSelectFood = (food: any) => {
+    setSelectedFood(food);
+    setFoodSearch(`${food.nameEn} | ${food.nameAr}`);
+    setIsFoodDropdownOpen(false);
+    
+    // Auto-fill meal name if empty
+    if (!formData.name) {
+      setFormData(prev => ({ ...prev, name: food.nameEn }));
+    }
+
+    // Auto-add to ingredients if not already there
+    const ingredientText = `${foodQuantity}g ${food.nameEn}`;
+    if (!formData.ingredients.includes(ingredientText)) {
+      setFormData(prev => ({ 
+        ...prev, 
+        ingredients: [...prev.ingredients, ingredientText] 
+      }));
+    }
+
+    calculateNutrition(food, foodQuantity);
+  };
+
+  const calculateNutrition = (food: any, quantity: number) => {
+    if (!food) return;
+    const ratio = quantity / 100;
+    setFormData({
+      ...formData,
+      calories: Math.round(food.calories * ratio),
+      protein: parseFloat((food.protein * ratio).toFixed(1)),
+      carbs: parseFloat((food.carbs * ratio).toFixed(1)),
+      fats: parseFloat((food.fats * ratio).toFixed(1)),
+      fiber: parseFloat((food.fiber * ratio).toFixed(1)),
+    });
+  };
+
+  const handleQuantityChange = (val: number) => {
+    setFoodQuantity(val);
+    if (selectedFood) {
+      calculateNutrition(selectedFood, val);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -122,12 +179,17 @@ const AdminMealsPage = () => {
       protein: 0,
       carbs: 0,
       fats: 0,
+      fiber: 0,
       prepTime: '',
       image: '',
       videoUrl: ''
     });
     setIsEditing(false);
     setCurrentId(null);
+    setFoodSearch('');
+    setSelectedFood(null);
+    setFoodQuantity(100);
+    setPreviewUrl(null);
   };
 
   const handleEdit = (meal: any) => {
@@ -139,6 +201,7 @@ const AdminMealsPage = () => {
       protein: meal.protein,
       carbs: meal.carbs,
       fats: meal.fats,
+      fiber: meal.fiber || 0,
       prepTime: meal.prepTime,
       image: meal.image || '',
       videoUrl: meal.videoUrl || ''
@@ -147,6 +210,11 @@ const AdminMealsPage = () => {
     setIsEditing(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const filteredFoods = foodsData.filter(food => 
+    food.nameEn.toLowerCase().includes(foodSearch.toLowerCase()) || 
+    food.nameAr.includes(foodSearch)
+  );
 
   return (
     <div className="p-6 space-y-8 max-w-7xl mx-auto">
@@ -179,22 +247,102 @@ const AdminMealsPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Smart Food Selector Section */}
+            <div className="p-4 border border-primary/20 bg-primary/5 rounded-xl space-y-4">
+              <h3 className="text-sm font-bold flex items-center gap-2 text-primary">
+                <Search className="w-4 h-4" />
+                Smart Food Selector & Nutrition Calculator
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2 relative" ref={foodDropdownRef}>
+                  <label className="text-xs font-semibold text-muted-foreground uppercase">Search Global Foods (EN/AR)</label>
+                  <div className="relative">
+                    <Input 
+                      value={foodSearch}
+                      onChange={(e) => {
+                        setFoodSearch(e.target.value);
+                        setIsFoodDropdownOpen(true);
+                      }}
+                      onFocus={() => setIsFoodDropdownOpen(true)}
+                      placeholder="Start typing... (e.g. Chicken or دجاج)"
+                      className="pl-10"
+                    />
+                    <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
+                  </div>
+                  
+                  {isFoodDropdownOpen && foodSearch && (
+                    <div className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-xl max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20">
+                      {filteredFoods.length > 0 ? (
+                        filteredFoods.map((food) => (
+                          <div 
+                            key={food.id}
+                            className="p-3 hover:bg-primary/10 cursor-pointer border-b last:border-0 flex justify-between items-center transition-colors"
+                            onClick={() => handleSelectFood(food)}
+                          >
+                            <div>
+                              <div className="font-medium text-sm">{food.nameEn}</div>
+                              <div className="text-xs text-muted-foreground">{food.nameAr}</div>
+                            </div>
+                            <div className="text-xs font-bold text-primary">
+                              {food.calories} kcal / 100g
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-4 text-center text-sm text-muted-foreground">No foods found</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase">Quantity (Grams / ML)</label>
+                  <div className="flex gap-2">
+                    <Input 
+                      type="number"
+                      value={foodQuantity}
+                      onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 0)}
+                      className="font-bold text-primary"
+                    />
+                    <div className="flex items-center px-3 bg-muted rounded-md text-sm font-bold">UNIT: G/ML</div>
+                  </div>
+                </div>
+              </div>
+
+              {selectedFood && (
+                <div className="flex flex-wrap gap-4 pt-2 border-t border-primary/10">
+                  <div className="text-xs">
+                    <span className="text-muted-foreground">Base: </span>
+                    <span className="font-bold text-primary">{selectedFood.calories} kcal / {selectedFood.unit}</span>
+                  </div>
+                  <div className="text-xs">
+                    <span className="text-muted-foreground">Calculating for: </span>
+                    <span className="font-bold text-primary">{foodQuantity}g</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Calories</label>
-                <Input type="number" value={formData.calories} onChange={(e) => setFormData({ ...formData, calories: parseInt(e.target.value) })} required />
+                <Input type="number" value={formData.calories} onChange={(e) => setFormData({ ...formData, calories: parseInt(e.target.value) })} required className="border-orange-200 focus:ring-orange-100" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Protein (g)</label>
-                <Input type="number" value={formData.protein} onChange={(e) => setFormData({ ...formData, protein: parseInt(e.target.value) })} required />
+                <Input type="number" value={formData.protein} onChange={(e) => setFormData({ ...formData, protein: parseFloat(e.target.value) })} required className="border-blue-200 focus:ring-blue-100" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Carbs (g)</label>
-                <Input type="number" value={formData.carbs} onChange={(e) => setFormData({ ...formData, carbs: parseInt(e.target.value) })} required />
+                <Input type="number" value={formData.carbs} onChange={(e) => setFormData({ ...formData, carbs: parseFloat(e.target.value) })} required className="border-green-200 focus:ring-green-100" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Fats (g)</label>
-                <Input type="number" value={formData.fats} onChange={(e) => setFormData({ ...formData, fats: parseInt(e.target.value) })} required />
+                <Input type="number" value={formData.fats} onChange={(e) => setFormData({ ...formData, fats: parseFloat(e.target.value) })} required className="border-yellow-200 focus:ring-yellow-100" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Fiber (g)</label>
+                <Input type="number" value={formData.fiber} onChange={(e) => setFormData({ ...formData, fiber: parseFloat(e.target.value) })} required className="border-purple-200 focus:ring-purple-100" />
               </div>
             </div>
 
@@ -316,9 +464,6 @@ const AdminMealsPage = () => {
                       <img 
                         src={previewUrl || `${import.meta.env.VITE_API_URL}/upload/${formData.image}`} 
                         className="h-full w-full object-cover" 
-                        onLoad={() => {
-                          // Optional: if it was a blob URL, we could revoke it after the real one loads
-                        }}
                       />
                     ) : (
                       <Camera className="text-muted-foreground" />
@@ -387,8 +532,10 @@ const AdminMealsPage = () => {
                 <div className="grid grid-cols-2 gap-y-2 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1"><Clock className="w-3 h-3" /> {meal.prepTime}</div>
                   <div className="flex items-center gap-1"><Flame className="w-3 h-3" /> {meal.calories} kcal</div>
-                  <div className="flex items-center gap-1 font-bold text-primary">P: {meal.protein}g</div>
+                  <div className="flex items-center gap-1 font-bold text-blue-500">P: {meal.protein}g</div>
                   <div className="flex items-center gap-1 font-bold text-orange-500">C: {meal.carbs}g</div>
+                  <div className="flex items-center gap-1 font-bold text-yellow-600">F: {meal.fats}g</div>
+                  <div className="flex items-center gap-1 font-bold text-purple-500">Fiber: {meal.fiber}g</div>
                 </div>
               </CardContent>
             </Card>

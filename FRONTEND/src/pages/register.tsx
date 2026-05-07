@@ -24,6 +24,7 @@ import { DecorIcon } from "@/components/ui/decor-icon";
 import { AuthBackground } from "@/components/ui/auth-background";
 import { Loader2 } from "lucide-react";
 import { GoogleLogin } from "@react-oauth/google";
+import { isAdminEmail } from "@/lib/constants";
 
 const registerSchema = z.object({
   userName: z.string()
@@ -108,8 +109,7 @@ export default function RegisterPage() {
       setAuth(user, accessToken, refreshToken);
       toast.success("Welcome back! Google Login successful.", { id: toastId });
       
-      const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || "amr917151@gmail.com";
-      const isAdmin = user.email === adminEmail;
+      const isAdmin = isAdminEmail(user.email);
       setTimeout(() => navigate(isAdmin ? "/admin/workouts" : "/#philosophy"), 1000);
     } catch (error: any) {
       toast.error(error.message || "Google Login failed", { id: toastId });

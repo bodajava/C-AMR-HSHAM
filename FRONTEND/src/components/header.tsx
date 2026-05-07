@@ -8,6 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { landingNavLinks } from "@/components/landing-shared";
 import { useAuthStore } from "@/store/auth-store";
+import { isAdminEmail } from "@/lib/constants";
 
 export function Header() {
 	const scrolled = useScroll(10);
@@ -56,7 +57,7 @@ export function Header() {
 							</>
 						) : (
 							<>
-								{(user?.email === (import.meta.env.VITE_ADMIN_EMAIL || "amr917151@gmail.com")) ? (
+								{isAdminEmail(user?.email) ? (
 									<Button asChild size="sm" variant="ghost" className="font-semibold">
 										<Link to="/admin/workouts">Admin Panel</Link>
 									</Button>

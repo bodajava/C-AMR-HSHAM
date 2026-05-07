@@ -9,6 +9,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const CATEGORIES = ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core', 'Cardio'];
 
+const EXERCISE_MAPPING: Record<string, string[]> = {
+  'Chest': ['Bench Press', 'Incline Dumbbell Press', 'Chest Fly', 'Push-ups'],
+  'Back': ['Pull-ups', 'Lat Pulldown', 'Seated Row', 'Deadlift'],
+  'Legs': ['Squat', 'Leg Press', 'Romanian Deadlift', 'Leg Curl'],
+  'Shoulders': ['Overhead Press', 'Lateral Raise', 'Front Raise', 'Face Pulls'],
+  'Arms': ['Biceps Curl', 'Hammer Curl', 'Triceps Pushdown', 'Skull Crushers'],
+  'Core': ['Plank', 'Crunches', 'Leg Raises', 'Russian Twist'],
+  'Cardio': ['Running', 'Cycling', 'Swimming', 'Jump Rope']
+};
+
 interface SubExercise {
   name: string;
   videoUrl: string;
@@ -119,6 +129,8 @@ const AdminWorkoutsPage = () => {
     }
   };
 
+  const filteredExercises = EXERCISE_MAPPING[formData.category] || [];
+
   return (
     <div className="p-6 space-y-8 max-w-7xl mx-auto">
       <div className="flex justify-between items-center">
@@ -133,23 +145,27 @@ const AdminWorkoutsPage = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Workout Name</label>
-                <Input 
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. Chest Annihilation"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
                 <label className="text-sm font-medium">Category</label>
                 <select 
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value, name: '' })}
                 >
                   {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Workout Name</label>
+                <Input 
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Select or type exercise name"
+                  list="workout-names"
+                  required
+                />
+                <datalist id="workout-names">
+                  {filteredExercises.map(ex => <option key={ex} value={ex} />)}
+                </datalist>
               </div>
             </div>
 
@@ -159,7 +175,6 @@ const AdminWorkoutsPage = () => {
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Briefly describe the workout goals..."
-                required
               />
             </div>
 
@@ -197,12 +212,18 @@ const AdminWorkoutsPage = () => {
                   </Button>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Input 
-                      placeholder="Exercise Name" 
-                      value={sub.name}
-                      onChange={(e) => handleSubExerciseChange(index, 'name', e.target.value)}
-                      required
-                    />
+                    <div className="space-y-2">
+                      <Input 
+                        placeholder="Exercise Name" 
+                        value={sub.name}
+                        onChange={(e) => handleSubExerciseChange(index, 'name', e.target.value)}
+                        list={`sub-exercise-names-${index}`}
+                        required
+                      />
+                      <datalist id={`sub-exercise-names-${index}`}>
+                        {filteredExercises.map(ex => <option key={ex} value={ex} />)}
+                      </datalist>
+                    </div>
                     <Input 
                       placeholder="Video URL" 
                       value={sub.videoUrl}

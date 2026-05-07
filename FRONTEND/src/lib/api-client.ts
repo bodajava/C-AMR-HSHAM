@@ -16,14 +16,23 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, config.data || '');
   return config;
 });
 
 // Response Interceptor: Handle Token Refresh & Errors
 apiClient.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    console.log(`[API Success] ${response.config.method?.toUpperCase()} ${response.config.url}`, response.data);
+    return response.data;
+  },
   async (error) => {
     const originalRequest = error.config;
+    console.error(`[API Error] ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}`, {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
 
     // Handle Unauthorized (401) - Attempt Token Refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -57,7 +66,8 @@ apiClient.interceptors.response.use(
       }
     }
 
-    return Promise.reject(error.response?.data || error.message);
+    const errorMessage = error.response?.data?.message || error.response?.data?.Error || error.message || "An unexpected error occurred";
+    return Promise.reject(new Error(errorMessage));
   }
 );
 
@@ -119,4 +129,11 @@ export const mealApi = {
 export const metricsApi = {
   getMetrics: () => apiClient.get('/metrics'),
   updateMetrics: (data: any) => apiClient.patch('/metrics', data),
+};
+
+// Weekly Plan APIs
+export const weeklyPlanApi = {
+  getAll: () => apiClient.get('/weekly-plan'),
+  getByDay: (day: string) => apiClient.get(`/weekly-plan/${day}`),
+  updateByDay: (day: string, data: any) => apiClient.patch(`/weekly-plan/${day}`, data),
 };

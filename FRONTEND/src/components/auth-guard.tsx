@@ -5,6 +5,7 @@ import { userApi } from "@/lib/api-client";
 import { requestForToken } from "@/lib/firebase";
 
 import { RoleEnum } from "@/types/roles";
+import { isAdminEmail } from "@/lib/constants";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -22,15 +23,21 @@ export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
     }
 
     if (token && user && allowedRoles) {
+      const userRole = Number(user.role);
+      const userEmail = user.email?.toLowerCase().trim();
       const isAdminRoute = allowedRoles.includes(RoleEnum.ADMIN);
-      const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || "amr917151@gmail.com";
-      
-      if (isAdminRoute && user.email !== adminEmail) {
-        navigate("/dashboard");
-        return;
-      }
 
-      if (!allowedRoles.includes(user.role!)) {
+      // Strict Admin check: Role must be ADMIN/COACH AND Email must be in whitelist for ADMIN routes
+      if (isAdminRoute) {
+        if (userRole !== RoleEnum.ADMIN && userRole !== RoleEnum.COACH) {
+          navigate("/dashboard");
+          return;
+        }
+        if (!isAdminEmail(userEmail)) {
+          navigate("/dashboard");
+          return;
+        }
+      } else if (!allowedRoles.includes(userRole as RoleEnum)) {
         navigate("/dashboard");
         return;
       }
@@ -65,7 +72,7 @@ export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
   }, [token, user, navigate, setAuth]);
 
   if (!token) return null;
-  if (allowedRoles && user && !allowedRoles.includes(user.role!)) return null;
+  // if (allowedRoles && user && !allowedRoles.includes(user.role!)) return null;
 
   return <>{children}</>;
 }

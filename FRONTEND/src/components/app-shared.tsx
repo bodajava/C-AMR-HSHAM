@@ -6,6 +6,7 @@ import {
 	Dumbbell01Icon,
 	AppleIcon,
 	CreditCardIcon,
+	Calendar03Icon,
 } from "@hugeicons/core-free-icons";
 
 import { RoleEnum } from "@/types/roles";
@@ -48,6 +49,11 @@ export const navGroups: SidebarNavGroup[] = [
 				title: "Manage Metrics",
 				url: "/admin/metrics",
 				icon: <HugeiconsIcon icon={Analytics02Icon} strokeWidth={2} />,
+			},
+			{
+				title: "Weekly Strategy",
+				url: "/admin/weekly-plan",
+				icon: <HugeiconsIcon icon={Calendar03Icon} strokeWidth={2} />,
 			},
 		],
 	},

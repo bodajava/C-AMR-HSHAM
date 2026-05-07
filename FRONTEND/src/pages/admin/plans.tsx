@@ -43,7 +43,9 @@ export default function AdminPlansPage() {
       const response: any = await subscriptionApi.adminGetPlans();
       setPlans(response.data || []);
     } catch (error: any) {
-      toast.error("Failed to fetch plans");
+      const errorMsg = error.response?.data?.message || error.message || "Failed to fetch plans";
+      console.error('Failed to fetch plans:', error);
+      toast.error(errorMsg);
       setPlans([]);
     } finally {
       setIsLoading(false);

@@ -11,7 +11,7 @@ export interface ISubExercise {
 export interface IWorkout extends Document {
     name: string;
     category: string;
-    description: string;
+    description?: string;
     subExercises: ISubExercise[];
     videoUrl?: string;
     createdAt: Date;
@@ -29,7 +29,7 @@ const subExerciseSchema = new Schema<ISubExercise>({
 const workoutSchema = new Schema<IWorkout>({
     name: { type: String, required: true },
     category: { type: String, required: true },
-    description: { type: String, required: true },
+    description: { type: String },
     subExercises: [subExerciseSchema],
     videoUrl: { type: String },
 }, {

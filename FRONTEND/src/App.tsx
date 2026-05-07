@@ -26,6 +26,7 @@ const AdminWorkoutsPage = lazy(() => import("./pages/admin/workouts"));
 const AdminMealsPage    = lazy(() => import("./pages/admin/meals"));
 const AdminMetricsPage  = lazy(() => import("./pages/admin/metrics"));
 const AdminPlansPage    = lazy(() => import("./pages/admin/plans"));
+const AdminWeeklyPlanPage = lazy(() => import("./pages/admin/weekly-plan"));
 const SubscriptionSuccessPage = lazy(() => import("./pages/subscription/success"));
 const SubscriptionCancelPage  = lazy(() => import("./pages/subscription/cancel"));
 const PhilosophyPage          = lazy(() => import("./pages/philosophy"));
@@ -81,6 +82,7 @@ export default function App() {
                 <Route path="meals"    element={<AdminMealsPage />} />
                 <Route path="metrics"  element={<AdminMetricsPage />} />
                 <Route path="plans"    element={<AdminPlansPage />} />
+                <Route path="weekly-plan" element={<AdminWeeklyPlanPage />} />
               </Route>
 
               {/* ── User Dashboard ────────────────────────────────────────── */}

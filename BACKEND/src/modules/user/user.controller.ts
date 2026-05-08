@@ -13,6 +13,21 @@ import { asyncHandler } from "../../common/utils/async-handler.util.js";
 
 const userRouter = Router();
 
+userRouter.get('/clients', authentication(), authorization(endPoint.clients), asyncHandler(async (req: Request, res: Response) => {
+  const clients = await userService.findAllClients();
+  return successResponse({ res, data: { clients } });
+}));
+
+userRouter.get('/clients/:id', authentication(), authorization(endPoint.clients), asyncHandler(async (req: Request, res: Response) => {
+  const client = await userService.findById(req.params.id as string);
+  return successResponse({ res, data: client });
+}));
+
+userRouter.patch('/clients/:id', authentication(), authorization(endPoint.clients), asyncHandler(async (req: Request, res: Response) => {
+  const user = await userService.update(req.params.id as string, req.body);
+  return successResponse({ res, message: "Client updated successfully.", data: { user } });
+}));
+
 userRouter.get('/', authentication(), authorization(endPoint.profile), asyncHandler(async (req: Request, res: Response) => {
   const data = await userService.profile((req as any).user);
   return successResponse({ res, data });

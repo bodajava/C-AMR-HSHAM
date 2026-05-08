@@ -4,13 +4,29 @@ import workoutService from "./workout.service.js";
 import { authentication, authorization } from "../../middleware/index.js";
 import { RoleEnum } from "../../common/enums/user.enum.js";
 import { asyncHandler } from "../../common/utils/async-handler.util.js";
+import userService from "../user/user.service.js";
 
 const workoutRouter = Router();
 
 // Public/User routes
 workoutRouter.get("/", authentication(), asyncHandler(async (req: Request, res: Response) => {
-    const workouts = await workoutService.findAll();
-    return successResponse({ res, data: workouts });
+    const user = (req as any).user;
+    const { userId } = req.query;
+    
+    let filter = {};
+    
+    // If target userId is provided and requester is ADMIN/COACH
+    if (userId && [RoleEnum.ADMIN, RoleEnum.COACH].includes(user.role)) {
+        const targetUser = await userService.findById(userId as string);
+        if (targetUser) {
+            filter = { _id: { $in: targetUser.assignedWorkouts || [] } };
+        }
+    } else if (user.role === RoleEnum.CLIENT) {
+        filter = { _id: { $in: user.assignedWorkouts || [] } };
+    }
+    
+    const workouts = await workoutService.findAll(filter);
+    return successResponse({ res, data: { workouts } });
 }));
 
 workoutRouter.get("/:id", authentication(), asyncHandler(async (req: Request, res: Response) => {
@@ -23,7 +39,8 @@ workoutRouter.post("/",
     authentication(), 
     authorization([RoleEnum.ADMIN, RoleEnum.COACH]), 
     asyncHandler(async (req: Request, res: Response) => {
-        const workout = await workoutService.create(req.body);
+        const userId = (req as any).user._id;
+        const workout = await workoutService.create({ ...req.body, userId });
         return successResponse({ res, message: "Workout created successfully", data: workout, statusCode: 201 });
     })
 );
@@ -34,6 +51,15 @@ workoutRouter.patch("/:id",
     asyncHandler(async (req: Request, res: Response) => {
         const workout = await workoutService.update(req.params.id as string, req.body);
         return successResponse({ res, message: "Workout updated successfully", data: workout });
+    })
+);
+
+workoutRouter.patch("/presigned-url",
+    authentication(),
+    authorization([RoleEnum.ADMIN, RoleEnum.COACH]),
+    asyncHandler(async (req: Request, res: Response) => {
+        const data = await workoutService.createPresignedUrl(req.body);
+        return successResponse({ res, data });
     })
 );
 

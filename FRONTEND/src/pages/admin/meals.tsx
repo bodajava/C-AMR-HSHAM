@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { mealApi } from '@/lib/api-client';
+import { mealApi } from '@/api/meal';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Camera, Clock, Flame, X, Loader2, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -52,7 +52,7 @@ const AdminMealsPage = () => {
   const fetchMeals = async () => {
     try {
       const res = await mealApi.getAll();
-      setMeals(res.data);
+      setMeals(res.data?.meals || []);
     } catch (error) {
       toast.error('Failed to fetch meals');
     } finally {
@@ -84,7 +84,7 @@ const AdminMealsPage = () => {
         headers: { 'Content-Type': file.type }
       });
 
-      setFormData({ ...formData, image: Key });
+      setFormData(prev => ({ ...prev, image: Key }));
       toast.success('Image uploaded successfully', { id: toastId });
     } catch (error) {
       console.error('Upload error:', error);
@@ -211,7 +211,7 @@ const AdminMealsPage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const filteredFoods = foodsData.filter(food => 
+  const filteredFoods = (foodsData as any[]).filter((food: any) => 
     food.nameEn.toLowerCase().includes(foodSearch.toLowerCase()) || 
     food.nameAr.includes(foodSearch)
   );
@@ -226,24 +226,73 @@ const AdminMealsPage = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Meal Name</label>
-                <Input 
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. Grilled Salmon Salad"
-                  required
-                />
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Image Upload Section */}
+              <div className="w-full md:w-48 space-y-2">
+                <label className="text-sm font-medium">Meal Image</label>
+                <div className="relative group aspect-square rounded-xl border-2 border-dashed border-border/60 overflow-hidden bg-accent/5 flex items-center justify-center hover:border-primary/50 transition-colors">
+                  {previewUrl || formData.image ? (
+                    <>
+                      <img 
+                        src={previewUrl || `${import.meta.env.VITE_API_URL}/upload/${formData.image}`} 
+                        alt="Preview" 
+                        className="w-full h-full object-cover" 
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Camera className="w-8 h-8 text-white" />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <Camera className="w-8 h-8" />
+                      <span className="text-xs font-medium text-center">Upload Meal Photo</span>
+                    </div>
+                  )}
+                  <input 
+                    type="file" 
+                    className="absolute inset-0 opacity-0 cursor-pointer" 
+                    onChange={handleImageUpload}
+                    accept="image/*"
+                    disabled={isUploading}
+                  />
+                  {isUploading && (
+                    <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Preparation Time</label>
-                <Input 
-                  value={formData.prepTime}
-                  onChange={(e) => setFormData({ ...formData, prepTime: e.target.value })}
-                  placeholder="e.g. 20-30 mins"
-                  required
-                />
+
+              <div className="flex-1 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Meal Name</label>
+                    <Input 
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="e.g. Grilled Salmon Salad"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Preparation Time</label>
+                    <Input 
+                      value={formData.prepTime}
+                      onChange={(e) => setFormData({ ...formData, prepTime: e.target.value })}
+                      placeholder="e.g. 20-30 mins"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Recipe Video URL (Optional)</label>
+                  <Input 
+                    value={formData.videoUrl} 
+                    onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} 
+                    placeholder="YouTube or hosted video link" 
+                  />
+                </div>
               </div>
             </div>
 
@@ -273,7 +322,7 @@ const AdminMealsPage = () => {
                   {isFoodDropdownOpen && foodSearch && (
                     <div className="absolute z-50 w-full mt-1 bg-background border rounded-lg shadow-xl max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20">
                       {filteredFoods.length > 0 ? (
-                        filteredFoods.map((food) => (
+                        filteredFoods.map((food: any) => (
                           <div 
                             key={food.id}
                             className="p-3 hover:bg-primary/10 cursor-pointer border-b last:border-0 flex justify-between items-center transition-colors"
@@ -455,47 +504,24 @@ const AdminMealsPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Meal Image</label>
-                <div className="flex items-center gap-4">
-                  <div className="h-20 w-20 rounded-lg bg-accent/20 flex items-center justify-center overflow-hidden border">
-                    {previewUrl || formData.image ? (
-                      <img 
-                        src={previewUrl || `${import.meta.env.VITE_API_URL}/upload/${formData.image}`} 
-                        className="h-full w-full object-cover" 
-                      />
-                    ) : (
-                      <Camera className="text-muted-foreground" />
-                    )}
-                  </div>
-                  <label className="cursor-pointer">
-                    <div className="p-2 border rounded-md hover:bg-accent transition-colors text-sm font-medium">
-                      {isUploading ? 'Uploading...' : 'Choose Image'}
-                    </div>
-                    <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={isUploading} />
-                  </label>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Recipe Video URL</label>
-                <Input value={formData.videoUrl} onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} placeholder="Optional video link" />
-              </div>
-            </div>
-
             <div className="flex gap-4">
-              <Button type="submit" className="flex-1" disabled={isSubmitting}>
+              <Button type="submit" className="flex-1 h-12 text-lg font-bold shadow-lg shadow-primary/20" disabled={isSubmitting || isUploading}>
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     {isEditing ? 'Updating...' : 'Creating...'}
                   </>
+                ) : isUploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Uploading Image...
+                  </>
                 ) : (
-                  isEditing ? 'Update Meal' : 'Create Meal'
+                  isEditing ? 'Update Meal Record' : 'Save New Meal'
                 )}
               </Button>
               {isEditing && (
-                <Button type="button" variant="outline" onClick={resetForm}>Cancel</Button>
+                <Button type="button" variant="outline" className="h-12 px-8 font-bold" onClick={resetForm}>Cancel</Button>
               )}
             </div>
           </form>
@@ -504,38 +530,56 @@ const AdminMealsPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {Array.isArray(meals) && meals.length > 0 ? (
           meals.map((meal) => (
-            <Card key={meal._id} className="overflow-hidden border-border/40 hover:border-primary/50 transition-all">
+            <Card key={meal._id} className="group overflow-hidden border-border/40 hover:border-primary/50 transition-all">
               <div className="aspect-video relative overflow-hidden bg-accent/20">
                 {meal.image ? (
-                  <img src={`${import.meta.env.VITE_API_URL}/upload/${meal.image}`} className="w-full h-full object-cover" />
+                  <img src={`${import.meta.env.VITE_API_URL}/upload/${meal.image}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center"><Flame className="w-12 h-12 text-muted-foreground/20" /></div>
                 )}
-                <div className="absolute top-2 right-2 flex gap-2">
-                  <Button variant="secondary" size="icon" className="h-8 w-8" onClick={() => handleEdit(meal)}><Pencil className="w-4 h-4" /></Button>
-                  <Button variant="destructive" size="icon" className="h-8 w-8" onClick={async () => {
-                    if (confirm('Delete this meal?')) {
-                      const toastId = toast.loading('Deleting meal...');
-                      try {
-                        await mealApi.delete(meal._id);
-                        toast.success('Meal deleted successfully', { id: toastId });
-                        fetchMeals();
-                      } catch (error) {
-                        toast.error('Failed to delete meal', { id: toastId });
-                      }
-                    }
-                  }}><Trash2 className="w-4 h-4" /></Button>
-                </div>
               </div>
-              <CardContent className="pt-4">
-                <CardTitle className="mb-2">{meal.name}</CardTitle>
-                <div className="grid grid-cols-2 gap-y-2 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1"><Clock className="w-3 h-3" /> {meal.prepTime}</div>
-                  <div className="flex items-center gap-1"><Flame className="w-3 h-3" /> {meal.calories} kcal</div>
-                  <div className="flex items-center gap-1 font-bold text-blue-500">P: {meal.protein}g</div>
-                  <div className="flex items-center gap-1 font-bold text-orange-500">C: {meal.carbs}g</div>
-                  <div className="flex items-center gap-1 font-bold text-yellow-600">F: {meal.fats}g</div>
-                  <div className="flex items-center gap-1 font-bold text-purple-500">Fiber: {meal.fiber}g</div>
+              <CardHeader className="p-4">
+                <div className="flex justify-between items-start gap-2">
+                  <CardTitle className="text-xl leading-tight">{meal.name}</CardTitle>
+                  <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(meal)}><Pencil className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={async () => {
+                      if (confirm('Delete this meal?')) {
+                        const toastId = toast.loading('Deleting meal...');
+                        try {
+                          await mealApi.delete(meal._id);
+                          toast.success('Meal deleted successfully', { id: toastId });
+                          fetchMeals();
+                        } catch (error) {
+                          toast.error('Failed to delete meal', { id: toastId });
+                        }
+                      }
+                    }}><Trash2 className="w-4 h-4" /></Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="px-4 pb-4 pt-0">
+                <div className="grid grid-cols-2 gap-y-2 text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
+                  <div className="flex items-center gap-1.5"><Clock className="w-3 h-3" /> {meal.prepTime}</div>
+                  <div className="flex items-center gap-1.5"><Flame className="w-3 h-3" /> {meal.calories} kcal</div>
+                </div>
+                <div className="grid grid-cols-4 gap-1 mt-3">
+                  <div className="flex flex-col items-center p-1.5 bg-blue-500/5 rounded-lg border border-blue-500/10">
+                    <span className="text-[10px] text-blue-500/70 font-black">P</span>
+                    <span className="text-xs font-bold text-blue-600">{meal.protein}g</span>
+                  </div>
+                  <div className="flex flex-col items-center p-1.5 bg-orange-500/5 rounded-lg border border-orange-500/10">
+                    <span className="text-[10px] text-orange-500/70 font-black">C</span>
+                    <span className="text-xs font-bold text-orange-600">{meal.carbs}g</span>
+                  </div>
+                  <div className="flex flex-col items-center p-1.5 bg-yellow-500/5 rounded-lg border border-yellow-500/10">
+                    <span className="text-[10px] text-yellow-600/70 font-black">F</span>
+                    <span className="text-xs font-bold text-yellow-600">{meal.fats}g</span>
+                  </div>
+                  <div className="flex flex-col items-center p-1.5 bg-purple-500/5 rounded-lg border border-purple-500/10">
+                    <span className="text-[10px] text-purple-500/70 font-black">FB</span>
+                    <span className="text-xs font-bold text-purple-600">{meal.fiber}g</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>

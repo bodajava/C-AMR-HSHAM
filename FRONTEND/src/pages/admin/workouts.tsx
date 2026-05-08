@@ -1,23 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { workoutApi } from '@/lib/api-client';
+import { workoutApi } from '@/api/workout';
+import { EXERCISE_CATALOG } from '@/config/exercise-catalog';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Video, List, X, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Video, List, X, Loader2, Camera, Image as ImageIcon } from 'lucide-react';
+import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-const CATEGORIES = ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core', 'Cardio'];
-
-const EXERCISE_MAPPING: Record<string, string[]> = {
-  'Chest': ['Bench Press', 'Incline Dumbbell Press', 'Chest Fly', 'Push-ups'],
-  'Back': ['Pull-ups', 'Lat Pulldown', 'Seated Row', 'Deadlift'],
-  'Legs': ['Squat', 'Leg Press', 'Romanian Deadlift', 'Leg Curl'],
-  'Shoulders': ['Overhead Press', 'Lateral Raise', 'Front Raise', 'Face Pulls'],
-  'Arms': ['Biceps Curl', 'Hammer Curl', 'Triceps Pushdown', 'Skull Crushers'],
-  'Core': ['Plank', 'Crunches', 'Leg Raises', 'Russian Twist'],
-  'Cardio': ['Running', 'Cycling', 'Swimming', 'Jump Rope']
-};
+const CATEGORIES = Object.keys(EXERCISE_CATALOG).filter(k => k !== 'pack');
 
 interface SubExercise {
   name: string;
@@ -30,6 +22,7 @@ interface SubExercise {
 const AdminWorkoutsPage = () => {
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [, setLoading] = useState(true);
@@ -37,6 +30,7 @@ const AdminWorkoutsPage = () => {
     name: '',
     category: CATEGORIES[0],
     description: '',
+    image: '',
     videoUrl: '',
     subExercises: [] as SubExercise[]
   });
@@ -48,7 +42,7 @@ const AdminWorkoutsPage = () => {
   const fetchWorkouts = async () => {
     try {
       const res = await workoutApi.getAll();
-      setWorkouts(res.data);
+      setWorkouts(res.data?.workouts || []);
     } catch (error) {
       toast.error('Failed to fetch workouts');
     } finally {
@@ -75,6 +69,41 @@ const AdminWorkoutsPage = () => {
     setFormData({ ...formData, subExercises: subs });
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please upload an image file.");
+      return;
+    }
+
+    setIsUploading(true);
+    const toastId = toast.loading("Uploading workout image...");
+    try {
+      const response = await workoutApi.getPresignedUrl({
+        ContentType: file.type,
+        originalname: file.name
+      });
+
+      const { url, Key } = response.data;
+
+      await axios.put(url, file, {
+        headers: { 'Content-Type': file.type }
+      });
+
+      setFormData(prev => ({ ...prev, image: Key }));
+      toast.success("Image uploaded successfully!", { id: toastId });
+      return Key; // Return the key so it can be used immediately if needed
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload image. Please try again.", { id: toastId });
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -91,6 +120,7 @@ const AdminWorkoutsPage = () => {
         name: '',
         category: CATEGORIES[0],
         description: '',
+        image: '',
         videoUrl: '',
         subExercises: []
       });
@@ -109,6 +139,7 @@ const AdminWorkoutsPage = () => {
       name: workout.name,
       category: workout.category,
       description: workout.description,
+      image: workout.image || '',
       videoUrl: workout.videoUrl || '',
       subExercises: workout.subExercises || []
     });
@@ -129,7 +160,7 @@ const AdminWorkoutsPage = () => {
     }
   };
 
-  const filteredExercises = EXERCISE_MAPPING[formData.category] || [];
+  const filteredExercises = EXERCISE_CATALOG[formData.category] || [];
 
   return (
     <div className="p-6 space-y-8 max-w-7xl mx-auto">
@@ -143,140 +174,183 @@ const AdminWorkoutsPage = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Category</label>
-                <select 
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value, name: '' })}
-                >
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Workout Name</label>
-                <Input 
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Select or type exercise name"
-                  list="workout-names"
-                  required
-                />
-                <datalist id="workout-names">
-                  {filteredExercises.map(ex => <option key={ex} value={ex} />)}
-                </datalist>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Description</label>
-              <Textarea 
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Briefly describe the workout goals..."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Main Demo Video URL</label>
-              <Input 
-                value={formData.videoUrl}
-                onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                placeholder="YouTube or hosted video link"
-              />
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <List className="w-5 h-5 text-primary" />
-                  Exercises
-                </h3>
-                <Button type="button" variant="outline" size="sm" onClick={handleAddSubExercise}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Exercise
-                </Button>
-              </div>
-
-              {formData.subExercises.map((sub, index) => (
-                <div key={index} className="p-4 border border-border/60 rounded-lg bg-accent/20 relative space-y-4">
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    size="icon" 
-                    className="absolute top-2 right-2 text-destructive hover:text-destructive/80"
-                    onClick={() => handleRemoveSubExercise(index)}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Input 
-                        placeholder="Exercise Name" 
-                        value={sub.name}
-                        onChange={(e) => handleSubExerciseChange(index, 'name', e.target.value)}
-                        list={`sub-exercise-names-${index}`}
-                        required
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Image Upload Section */}
+              <div className="w-full md:w-48 space-y-2">
+                <label className="text-sm font-medium">Workout Image</label>
+                <div className="relative group aspect-square rounded-xl border-2 border-dashed border-border/60 overflow-hidden bg-accent/5 flex items-center justify-center hover:border-primary/50 transition-colors">
+                  {formData.image ? (
+                    <>
+                      <img
+                        src={`${import.meta.env.VITE_API_URL}/upload/${formData.image}`}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
                       />
-                      <datalist id={`sub-exercise-names-${index}`}>
-                        {filteredExercises.map(ex => <option key={ex} value={ex} />)}
-                      </datalist>
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Camera className="w-8 h-8 text-white" />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <ImageIcon className="w-8 h-8" />
+                      <span className="text-xs font-medium">Upload Image</span>
                     </div>
-                    <Input 
-                      placeholder="Video URL" 
-                      value={sub.videoUrl}
-                      onChange={(e) => handleSubExerciseChange(index, 'videoUrl', e.target.value)}
-                    />
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input 
-                        type="number" 
-                        placeholder="Sets" 
-                        value={sub.sets}
-                        onChange={(e) => handleSubExerciseChange(index, 'sets', parseInt(e.target.value))}
-                      />
-                      <Input 
-                        placeholder="Reps (e.g. 10-12)" 
-                        value={sub.reps}
-                        onChange={(e) => handleSubExerciseChange(index, 'reps', e.target.value)}
-                      />
+                  )}
+                  <input
+                    type="file"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    onChange={handleImageUpload}
+                    accept="image/*"
+                    disabled={isUploading}
+                  />
+                  {isUploading && (
+                    <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
                     </div>
-                    <Input 
-                      placeholder="Optional Notes" 
-                      value={sub.notes}
-                      onChange={(e) => handleSubExerciseChange(index, 'notes', e.target.value)}
-                    />
-                  </div>
+                  )}
                 </div>
-              ))}
+              </div>
+
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-1 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Category</label>
+                  <select
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value, name: '' })}
+                  >
+                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Workout Name</label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Select or type exercise name"
+                    list="workout-names"
+                    required
+                  />
+                  <datalist id="workout-names">
+                    {filteredExercises.map(ex => <option key={ex} value={ex} />)}
+                  </datalist>
+                </div>
+              </div>
             </div>
 
-            <div className="flex gap-4">
-              <Button type="submit" className="flex-1" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {isEditing ? 'Updating...' : 'Creating...'}
-                  </>
-                ) : (
-                  isEditing ? 'Update Workout' : 'Create Workout'
-                )}
-              </Button>
-              {isEditing && (
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => {
-                    setIsEditing(false);
-                    setCurrentId(null);
-                    setFormData({ name: '', category: CATEGORIES[0], description: '', videoUrl: '', subExercises: [] });
-                  }}
-                >
-                  Cancel
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Description</label>
+                <Textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Briefly describe the workout goals..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Main Demo Video URL</label>
+                <Input
+                  value={formData.videoUrl}
+                  onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+                  placeholder="YouTube or hosted video link"
+                />
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <List className="w-5 h-5 text-primary" />
+                    Exercises
+                  </h3>
+                  <Button type="button" variant="outline" size="sm" onClick={handleAddSubExercise}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Exercise
+                  </Button>
+                </div>
+
+                {formData.subExercises.map((sub, index) => (
+                  <div key={index} className="p-4 border border-border/60 rounded-lg bg-accent/20 relative space-y-4">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-2 right-2 text-destructive hover:text-destructive/80"
+                      onClick={() => handleRemoveSubExercise(index)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Input
+                          placeholder="Exercise Name"
+                          value={sub.name}
+                          onChange={(e) => handleSubExerciseChange(index, 'name', e.target.value)}
+                          list={`sub-exercise-names-${index}`}
+                          required
+                        />
+                        <datalist id={`sub-exercise-names-${index}`}>
+                          {filteredExercises.map(ex => <option key={ex} value={ex} />)}
+                        </datalist>
+                      </div>
+                      <Input
+                        placeholder="Video URL"
+                        value={sub.videoUrl}
+                        onChange={(e) => handleSubExerciseChange(index, 'videoUrl', e.target.value)}
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input
+                          type="number"
+                          placeholder="Sets"
+                          value={sub.sets}
+                          onChange={(e) => handleSubExerciseChange(index, 'sets', parseInt(e.target.value))}
+                        />
+                        <Input
+                          placeholder="Reps (e.g. 10-12)"
+                          value={sub.reps}
+                          onChange={(e) => handleSubExerciseChange(index, 'reps', e.target.value)}
+                        />
+                      </div>
+                      <Input
+                        placeholder="Optional Notes"
+                        value={sub.notes}
+                        onChange={(e) => handleSubExerciseChange(index, 'notes', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-4">
+                <Button type="submit" className="flex-1" disabled={isSubmitting || isUploading}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {isEditing ? 'Updating...' : 'Creating...'}
+                    </>
+                  ) : isUploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Uploading Image...
+                    </>
+                  ) : (
+                    isEditing ? 'Update Workout' : 'Create Workout'
+                  )}
                 </Button>
-              )}
-            </div>
+                {isEditing && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setIsEditing(false);
+                      setCurrentId(null);
+                      setFormData({ name: '', category: CATEGORIES[0], description: '', image: '', videoUrl: '', subExercises: [] });
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </div>
           </form>
         </CardContent>
       </Card>
@@ -285,13 +359,28 @@ const AdminWorkoutsPage = () => {
         {Array.isArray(workouts) && workouts.length > 0 ? (
           workouts.map((workout) => (
             <Card key={workout._id} className="group overflow-hidden border-border/40 hover:border-primary/50 transition-all">
-              <CardHeader className="bg-accent/10">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-primary">{workout.category}</span>
-                    <CardTitle className="mt-1">{workout.name}</CardTitle>
+              <div className="aspect-video w-full bg-accent/10 relative overflow-hidden">
+                {workout.image ? (
+                  <img
+                    src={`${import.meta.env.VITE_API_URL}/upload/${workout.image}`}
+                    alt={workout.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                    <ImageIcon className="w-12 h-12 opacity-20" />
                   </div>
-                  <div className="flex gap-2">
+                )}
+                <div className="absolute top-2 left-2">
+                  <span className="px-2 py-1 bg-black/60 backdrop-blur-md text-[10px] font-bold uppercase tracking-wider text-white rounded-md border border-white/10">
+                    {workout.category}
+                  </span>
+                </div>
+              </div>
+              <CardHeader className="p-4 pt-4">
+                <div className="flex justify-between items-start gap-2">
+                  <CardTitle className="text-xl leading-tight">{workout.name}</CardTitle>
+                  <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(workout)}>
                       <Pencil className="w-4 h-4" />
                     </Button>

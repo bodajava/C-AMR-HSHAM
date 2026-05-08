@@ -23,4 +23,7 @@ export interface IUser {
     deletedAt?:Date;    
     restoredAt?:Date;
     fcmToken?: string;
+    assignedProgram?: string;
+    assignedMeals?: any[]; // Array of Meal IDs
+    assignedWorkouts?: any[]; // Array of Workout IDs
 }

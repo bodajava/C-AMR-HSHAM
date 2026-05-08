@@ -12,8 +12,10 @@ export interface IWorkout extends Document {
     name: string;
     category: string;
     description?: string;
+    image?: string;
     subExercises: ISubExercise[];
     videoUrl?: string;
+    userId: Schema.Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -30,8 +32,10 @@ const workoutSchema = new Schema<IWorkout>({
     name: { type: String, required: true },
     category: { type: String, required: true },
     description: { type: String },
+    image: { type: String },
     subExercises: [subExerciseSchema],
     videoUrl: { type: String },
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 }, {
     timestamps: true,
     collection: "Workout",

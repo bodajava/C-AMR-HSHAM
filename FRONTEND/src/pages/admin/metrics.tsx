@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { metricsApi } from '@/lib/api-client';
+import { metricsApi } from '@/api/metrics';
+import { useAssignment } from '@/context/assignment-context';
 import { toast } from 'sonner';
 import { Save, Loader2, Activity, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 const AdminMetricsPage = () => {
+  const { targetClientId, targetClientName } = useAssignment();
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -28,7 +30,7 @@ const AdminMetricsPage = () => {
 
   useEffect(() => {
     fetchMetrics();
-  }, []);
+  }, [targetClientId]);
 
   // ── Automated Calculations ───────────────────────────────────────────────────
   useEffect(() => {
@@ -66,7 +68,7 @@ const AdminMetricsPage = () => {
 
   const fetchMetrics = async () => {
     try {
-      const res = await metricsApi.getMetrics();
+      const res = await metricsApi.getMetrics(targetClientId || undefined);
       if (res.data) {
         setFormData({
           livePulse: res.data.livePulse || 0,
@@ -97,7 +99,7 @@ const AdminMetricsPage = () => {
     setIsSubmitting(true);
     const toastId = toast.loading('Updating dashboard metrics...');
     try {
-      await metricsApi.updateMetrics(formData);
+      await metricsApi.updateMetrics(formData, targetClientId || undefined);
       toast.success('Metrics updated successfully', { id: toastId });
     } catch (error: any) {
       toast.error(error.message || 'Failed to update metrics', { id: toastId });
@@ -117,8 +119,15 @@ const AdminMetricsPage = () => {
   return (
     <div className="p-6 space-y-8 max-w-4xl mx-auto">
       <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-black tracking-tight">Dashboard Metrics</h1>
-        <p className="text-muted-foreground">Manage the global performance indicators shown on the user dashboard.</p>
+        <h1 className="text-3xl font-black tracking-tight">
+          {targetClientId ? `Metrics for ${targetClientName}` : "Dashboard Metrics"}
+        </h1>
+        <p className="text-muted-foreground">
+          {targetClientId 
+            ? `Manage the performance indicators for ${targetClientName}.`
+            : "Manage the global performance indicators shown on the user dashboard."
+          }
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

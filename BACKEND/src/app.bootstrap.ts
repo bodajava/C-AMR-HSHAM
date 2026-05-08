@@ -84,32 +84,42 @@ const bootstrap = async (): Promise<express.Express> => {
       return next(new NotFoundException('Path is required'));
     }
 
-    const Key = path as string;
-    const { Body, ContentType } = await (s3Service as any).getImage({ Key });
+    const Key = decodeURIComponent(path);
+    console.log(`[S3 Proxy] Fetching: ${Key}`);
 
-    res.setHeader(
-      "Content-Type",
-      ContentType || "application/octet-stream"
-    );
+    try {
+      const { Body, ContentType } = await s3Service.getImage({ Key });
 
-    res.set(
-      "Cross-Origin-Resource-Policy",
-      "cross-origin"
-    );
+      if (!Body) {
+        return res.status(404).json({ message: "File not found" });
+      }
 
-    if (download === "true") {
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="${fileName || Key.split("/").pop()}"`
-      );
-    }
+      res.setHeader("Content-Type", ContentType || "application/octet-stream");
+      res.set("Cross-Origin-Resource-Policy", "cross-origin");
 
-    if (Body instanceof (await import('stream')).Readable) {
-      Body.pipe(res);
-    } else if (Body instanceof Buffer || typeof Body === 'string') {
-      res.send(Body);
-    } else {
-      res.status(500).json({ message: "Invalid S3 payload type" });
+      if (download === "true") {
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename="${fileName || Key.split("/").pop()}"`
+        );
+      }
+
+      // Robust stream handling
+      if (typeof (Body as any).pipe === 'function') {
+        (Body as any).pipe(res);
+      } else if (typeof (Body as any).transformToByteArray === 'function') {
+        const buffer = await (Body as any).transformToByteArray();
+        res.send(Buffer.from(buffer));
+      } else {
+        res.send(Body);
+      }
+    } catch (error: any) {
+      if (error.name === 'NoSuchKey' || error.code === 'NoSuchKey') {
+        res.status(404).json({ message: "File not found" });
+      } else {
+        console.error(`[S3 Proxy] Error:`, error);
+        res.status(500).json({ message: "Error fetching from S3" });
+      }
     }
     return;
   }));

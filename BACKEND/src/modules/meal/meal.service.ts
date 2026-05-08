@@ -14,8 +14,8 @@ export class MealService {
         return await meal.save();
     }
 
-    async findAll() {
-        return await MealModel.find().sort({ createdAt: -1 });
+    async findAll(filter: any = {}) {
+        return await MealModel.find(filter).sort({ createdAt: -1 });
     }
 
     async findById(id: string) {
@@ -41,12 +41,27 @@ export class MealService {
         return await MealModel.findByIdAndDelete(id);
     }
 
-    async createPresignedUrl(data: { ContentType: string, originalname: string, id?: string }) {
+    async createPresignedUrl(data: { ContentType: string, originalname?: string, originMealName?: string, id?: string }) {
+        const originalName = data.originalname || data.originMealName || 'meal';
         const path = data.id ? `meals/${data.id}` : `meals/temp-${Date.now()}`;
+        
+        let finalName = originalName;
+        // Check if originalName already has an extension
+        const hasExtension = /\.[a-zA-Z0-9]+$/.test(originalName);
+        
+        if (!hasExtension) {
+            const ext = data.ContentType.split('/')[1];
+            if (ext) {
+                // Normalize jpeg to jpg if needed, or keep as is
+                const normalizedExt = ext === 'jpeg' ? 'jpg' : ext;
+                finalName = `${originalName}.${normalizedExt}`;
+            }
+        }
+
         const { url, Key } = await this.s3.createPresignedUploadLink({
             path,
             ContentType: data.ContentType,
-            originalname: data.originalname,
+            originalname: finalName,
         });
         return { url, Key };
     }

@@ -105,7 +105,7 @@ export class AuthenticationService {
       data: {
         ...pendingUser,
         confirmEmail: new Date(),
-        role: isMainAdmin ? RoleEnum.ADMIN : pendingUser.role || RoleEnum.USER
+        role: isMainAdmin ? RoleEnum.ADMIN : pendingUser.role || RoleEnum.CLIENT
       }
     });
 
@@ -309,7 +309,7 @@ export class AuthenticationService {
         provider: ProviderEnum.GOOGLE,
         confirmEmail: new Date(),
         profilePicture: payload.picture,
-        role: isMainAdmin ? RoleEnum.ADMIN : RoleEnum.USER
+        role: isMainAdmin ? RoleEnum.ADMIN : RoleEnum.CLIENT
       } as any
     });
 
@@ -405,7 +405,7 @@ export class AuthenticationService {
         provider: ProviderEnum.GOOGLE,
         confirmEmail: new Date(),
         profilePicture: payload.picture,
-        role: isMainAdmin ? RoleEnum.ADMIN : RoleEnum.USER
+        role: isMainAdmin ? RoleEnum.ADMIN : RoleEnum.CLIENT
       } as any
     });
 

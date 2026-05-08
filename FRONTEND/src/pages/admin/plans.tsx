@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { subscriptionApi } from "@/lib/api-client";
+import { subscriptionApi } from "@/api/subscription";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit3, Trash2, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 import {
   Dialog,
   DialogContent,

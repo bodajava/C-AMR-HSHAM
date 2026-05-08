@@ -1,11 +1,12 @@
 import PerformanceMetricsModel from "../../DB/model/performance-metrics.model.js";
 
 class PerformanceMetricsService {
-    async getMetrics() {
-        let metrics = await PerformanceMetricsModel.findOne().sort({ createdAt: -1 });
+    async getMetrics(userId: string) {
+        let metrics = await PerformanceMetricsModel.findOne({ userId }).sort({ createdAt: -1 });
         if (!metrics) {
             // Create default metrics if none exist
             metrics = await PerformanceMetricsModel.create({
+                userId,
                 livePulse: 12480,
                 intensity: 94,
                 dailyFuel: 2850,
@@ -25,8 +26,8 @@ class PerformanceMetricsService {
         return metrics;
     }
 
-    async updateMetrics(data: any) {
-        return await PerformanceMetricsModel.findOneAndUpdate({}, data, { upsert: true, new: true });
+    async updateMetrics(userId: string, data: any) {
+        return await PerformanceMetricsModel.findOneAndUpdate({ userId }, { ...data, userId }, { upsert: true, new: true });
     }
 }
 

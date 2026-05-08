@@ -11,6 +11,7 @@ export interface IMeal extends Document {
     prepTime: string;
     image?: string; // S3 key or URL
     videoUrl?: string;
+    userId: Schema.Types.ObjectId;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -26,6 +27,7 @@ const mealSchema = new Schema<IMeal>({
     prepTime: { type: String, required: true },
     image: { type: String },
     videoUrl: { type: String },
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 }, {
     timestamps: true,
     collection: "Meal",

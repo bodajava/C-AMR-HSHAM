@@ -6,7 +6,8 @@ export enum GenderEnum {
 export enum RoleEnum {
     USER,
     ADMIN,
-    COACH
+    COACH,
+    CLIENT
 }
 
 export enum ProviderEnum {

@@ -1,7 +1,7 @@
 import { HydratedDocument } from "mongoose";
 import { redisService, RedisService, baseRevokeTokenKey } from "../../common/services/redis.service.js";
 import { tokenService, TokenService } from "../../common/services/token.service.js";
-import { logoutEnum } from "../../common/enums/user.enum.js";
+import { logoutEnum, RoleEnum } from "../../common/enums/user.enum.js";
 import { ConflictException, NotFoundException } from "../../common/exception/domain.exception.js";
 import { IUser } from "../../common/interface/user.interface.js";
 import { s3Service, S3Service } from "../../common/services/s3.service.js";
@@ -124,6 +124,19 @@ export class UserService {
         });
         if (!user) throw new NotFoundException("User not found");
         return user;
+    }
+
+    async findById(id: string) {
+        const user = await this.userRepository.findById({ id });
+        if (!user) throw new NotFoundException("User not found");
+        return user;
+    }
+
+    async findAllClients() {
+        return await this.userRepository.find({
+            filter: { role: { $ne: RoleEnum.ADMIN } },
+            options: { sort: { createdAt: -1 } }
+        });
     }
 }
 

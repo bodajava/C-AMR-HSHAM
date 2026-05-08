@@ -47,6 +47,9 @@ const userSchema = new Schema<IUser>({
     deletedAt: { type: Date },
     restoredAt: { type: Date },
     fcmToken: { type: String },
+    assignedProgram: { type: String },
+    assignedMeals: [{ type: Schema.Types.ObjectId, ref: 'Meal' }],
+    assignedWorkouts: [{ type: Schema.Types.ObjectId, ref: 'Workout' }],
 
 
 }, {

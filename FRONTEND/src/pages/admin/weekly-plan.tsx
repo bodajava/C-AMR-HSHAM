@@ -14,13 +14,17 @@ import {
   FloppyDiskIcon,
   Note01Icon
 } from "@hugeicons/core-free-icons";
-import { workoutApi, mealApi, weeklyPlanApi } from "@/lib/api-client";
+import { useAssignment } from "@/context/assignment-context";
+import { workoutApi } from "@/api/workout";
+import { mealApi } from "@/api/meal";
+import { weeklyPlanApi } from "@/api/weekly-plan";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 export default function AdminWeeklyPlanPage() {
+    const { targetClientId, targetClientName } = useAssignment();
     const [selectedDay, setSelectedDay] = useState('monday');
     const [workouts, setWorkouts] = useState<any[]>([]);
     const [meals, setMeals] = useState<any[]>([]);
@@ -41,7 +45,7 @@ export default function AdminWeeklyPlanPage() {
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [targetClientId]);
 
     useEffect(() => {
         const plan = weeklyPlans.find(p => p.day === selectedDay);
@@ -60,13 +64,13 @@ export default function AdminWeeklyPlanPage() {
         try {
             setLoading(true);
             const [workoutRes, mealRes, planRes] = await Promise.all([
-                workoutApi.getAll(),
-                mealApi.getAll(),
-                weeklyPlanApi.getAll()
+                workoutApi.getAll(targetClientId || undefined),
+                mealApi.getAll(targetClientId || undefined),
+                weeklyPlanApi.getAll(targetClientId || undefined)
             ]);
-            setWorkouts(workoutRes.data);
-            setMeals(mealRes.data);
-            setWeeklyPlans(planRes.data);
+            setWorkouts(workoutRes.data?.workouts || []);
+            setMeals(mealRes.data?.meals || []);
+            setWeeklyPlans(planRes.data || []);
         } catch (error: any) {
             const errorMsg = error.response?.data?.message || error.message || "Failed to load data";
             console.error("Failed to fetch data", error);
@@ -79,8 +83,8 @@ export default function AdminWeeklyPlanPage() {
     const handleSave = async () => {
         try {
             setSaving(true);
-            await weeklyPlanApi.updateByDay(selectedDay, currentPlan);
-            toast.success(`Plan for ${selectedDay} updated successfully`);
+            await weeklyPlanApi.updateByDay(selectedDay, currentPlan, targetClientId || undefined);
+            toast.success(`Plan for ${selectedDay} updated successfully ${targetClientName ? `for ${targetClientName}` : ''}`);
             await fetchData(); // Refresh data
         } catch (error: any) {
             const errorMsg = error.response?.data?.message || error.message || "Failed to save plan";
@@ -125,9 +129,11 @@ export default function AdminWeeklyPlanPage() {
                 <div>
                     <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
                         <HugeiconsIcon icon={Calendar03Icon} className="h-8 w-8 text-primary" />
-                        Weekly Strategy Planner
+                        {targetClientId ? `Manage strategy for ${targetClientName}` : "Weekly Strategy Planner"}
                     </h1>
-                    <p className="text-muted-foreground font-medium">Assign elite protocols and nutrition to specific days.</p>
+                    <p className="text-muted-foreground font-medium">
+                        {targetClientId ? `Customizing elite protocols and nutrition for ${targetClientName}` : "Assign elite protocols and nutrition to specific days."}
+                    </p>
                 </div>
                 <Button 
                     onClick={handleSave} 

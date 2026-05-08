@@ -15,6 +15,7 @@ export interface IPerformanceMetrics extends Document {
     fats: number;
     fatsGoal: number;
     sleepScore: number;
+    userId: Schema.Types.ObjectId;
     updatedAt: Date;
 }
 
@@ -33,6 +34,7 @@ const performanceMetricsSchema = new Schema<IPerformanceMetrics>({
     fats: { type: Number, default: 0 },
     fatsGoal: { type: Number, default: 85 },
     sleepScore: { type: Number, default: 88 },
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
 }, {
     timestamps: true,
     collection: "PerformanceMetrics",

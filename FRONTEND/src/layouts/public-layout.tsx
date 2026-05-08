@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { Outlet } from "react-router-dom";
-import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
+import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
 
 /**
  * PublicLayout — renders the landing Header + Footer once, then

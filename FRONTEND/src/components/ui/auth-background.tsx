@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/utils";
 
 /** Wrap auth pages (Login / Register) with this background.
  *  Do NOT use in dashboard, meals, workouts, or any internal pages. */

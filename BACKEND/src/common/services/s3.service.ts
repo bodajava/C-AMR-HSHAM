@@ -181,10 +181,11 @@ export class S3Service {
     expiresIn?: number;
   }): Promise<{ url: string; Key: string }> {
     try {
+      const sanitizedName = (originalname || 'file').replace(/[^a-zA-Z0-9.-]/g, '_');
       const command = new PutObjectCommand({
         Bucket,
-        Key: `${path}/${randomUUID()}_____${originalname}`,
-        ContentType
+        Key: `${path}/${randomUUID()}_____${sanitizedName}`,
+        ContentType,
       });
 
       if (!command.input.Key) {

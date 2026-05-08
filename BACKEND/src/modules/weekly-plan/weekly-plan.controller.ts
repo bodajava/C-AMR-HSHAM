@@ -17,7 +17,14 @@ router.get(
     '/',
     authentication(),
     asyncHandler(async (req: any, res: Response) => {
-        const plans = await weeklyPlanService.getAll();
+        const user = req.user;
+        const { userId } = req.query;
+        
+        const targetUserId = (userId && [RoleEnum.ADMIN, RoleEnum.COACH].includes(user.role)) 
+            ? (userId as string) 
+            : user._id.toString();
+
+        const plans = await weeklyPlanService.getAll(targetUserId);
         return successResponse({
             res,
             message: 'Weekly plans retrieved successfully',
@@ -35,7 +42,14 @@ router.get(
     '/:day',
     authentication(),
     asyncHandler(async (req: any, res: Response) => {
-        const plan = await weeklyPlanService.getByDay(req.params.day);
+        const user = req.user;
+        const { userId } = req.query;
+        
+        const targetUserId = (userId && [RoleEnum.ADMIN, RoleEnum.COACH].includes(user.role)) 
+            ? (userId as string) 
+            : user._id.toString();
+
+        const plan = await weeklyPlanService.getByDay(targetUserId, req.params.day);
         return successResponse({
             res,
             message: `Plan for ${req.params.day} retrieved successfully`,
@@ -52,9 +66,16 @@ router.get(
 router.patch(
     '/:day',
     authentication(),
-    authorization([RoleEnum.ADMIN]),
+    authorization([RoleEnum.ADMIN, RoleEnum.COACH]),
     asyncHandler(async (req: any, res: Response) => {
-        const plan = await weeklyPlanService.updateByDay(req.params.day, req.body);
+        const user = req.user;
+        const { userId } = req.query;
+        
+        const targetUserId = (userId && [RoleEnum.ADMIN, RoleEnum.COACH].includes(user.role)) 
+            ? (userId as string) 
+            : user._id.toString();
+
+        const plan = await weeklyPlanService.updateByDay(targetUserId, req.params.day, req.body);
         return successResponse({
             res,
             message: `Plan for ${req.params.day} updated successfully`,
